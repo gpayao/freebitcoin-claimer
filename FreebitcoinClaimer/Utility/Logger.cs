@@ -1,0 +1,176 @@
+﻿namespace FreebitcoinClaimer.Utility
+{
+    internal enum LogLevel
+    {
+        Trace,
+        Debug,
+        Info,
+        Warning,
+        Error,
+        Fatal
+    }
+
+    internal static class Logger
+    {
+        internal static bool WriteToFile { get; set; }
+        internal static LogLevel Level { get; private set; }
+        internal static string? LogFile { get; private set; }
+
+        private static readonly DateTime StartTime = DateTime.Now;
+        private static readonly object writeLock = new object();
+
+        internal static void Setup()
+        {
+            Level = LogLevel.Info;
+            LogFile = Path.Combine(Folders.Logs, $@"{DateTime.Now:yyyy-MM-dd\THH-mm-ss}_FreeBitcoinClaimer.log");
+        }
+
+        internal static void SetLogLevel(string level)
+        {
+            if (Enum.TryParse(level, true, out LogLevel logLevel))
+                Level = logLevel;
+            else
+                Info($"Invalid log level \"{level}\", defaulting to INFO");
+        }
+
+        internal static void Trace(object message, params object[] arg)
+        {
+            if (Level <= LogLevel.Trace)
+                Write("TRACE", message.ToString()!, arg);
+        }
+
+        internal static void Debug(object message, params object[] arg)
+        {
+            if (Level <= LogLevel.Debug)
+                Write("DEBUG", message.ToString()!, arg);
+        }
+
+        internal static void Info(object message, params object[] arg)
+        {
+            if (Level <= LogLevel.Info)
+                Write("INFO", message.ToString()!, arg);
+        }
+
+        internal static void Warn(object message, params object[] arg)
+        {
+            if (Level <= LogLevel.Warning)
+                Write("WARN", message.ToString()!, arg);
+        }
+
+        internal static void Error(object message, params object[] arg)
+        {
+            if (Level <= LogLevel.Error)
+                Write("ERROR", message.ToString()!, arg);
+        }
+
+        internal static void Fatal(object message, params object[] arg)
+        {
+            if (Level <= LogLevel.Fatal)
+                Write("FATAL", message.ToString()!, arg);
+        }
+
+        internal static void PrintException(string message, Exception ex, bool fatal = false)
+        {
+            string errorType = $"An error of type {ex.GetType()} occured: {ex.Message}";
+
+            if (fatal)
+            {
+                Fatal(message);
+                Fatal(errorType);
+                Fatal(ex.StackTrace!);
+            }
+            else
+            {
+                Error(message);
+                Error(errorType);
+                Error(ex.StackTrace!);
+            }
+        }
+
+        internal static void CleanFiles()
+        {
+            if (Directory.Exists(Folders.Logs))
+            {
+                FileInfo[] logFiles = new DirectoryInfo(Folders.Logs).GetFiles().OrderByDescending(f => f.LastWriteTime).ToArray();
+
+                if (logFiles.Length > 50)
+                {
+                    Info($"Deleting {logFiles.Length - 50} old log files");
+
+                    foreach (FileInfo logFile in logFiles.Skip(50))
+                    {
+                        try
+                        {
+                            Trace("Deleting " + logFile.Name);
+                            logFile.Delete();
+                        }
+                        catch (Exception ex)
+                        {
+                            Error($"Failed to delete log file \"{logFile.Name}\": {ex.GetType()} - {ex.Message}");
+                        }
+                    }
+                }
+            }
+        }
+
+        private static void Write(string tag, string text, params object[] arg)
+        {
+            if (arg.Length > 0)
+                text = string.Format(text, arg);
+
+            var now = (DateTime.Now - StartTime).ToString("G");
+
+            StreamWriter writer = null!;
+
+            lock (writeLock)
+            {
+                try
+                {
+                    string directory = Path.GetDirectoryName(LogFile)!;
+
+                    if (WriteToFile)
+                    {
+                        if (!Directory.Exists(directory))
+                            Directory.CreateDirectory(directory);
+
+                        writer = new StreamWriter(LogFile!, true);
+                    }
+
+                    foreach (var str in text.Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        var filteredStr = str.Replace(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "~");
+
+#if DEBUG
+                        var st = new System.Diagnostics.StackTrace(true);
+                        var frame = st.GetFrame(2);
+                        var fileName = Path.GetFileNameWithoutExtension(frame!.GetFileName());
+                        var line = frame.GetFileLineNumber();
+                        var msg = $"{now} | {tag,5} | <{fileName}:{line}> {filteredStr}";
+#else
+                        var msg = $"{now} | {tag,5} | {filteredStr}";
+#endif
+
+                        System.Diagnostics.Debug.WriteLine(msg);
+
+                        if (writer != null)
+                            writer.WriteLine(msg);
+                    }
+
+                    if (writer != null)
+                        writer.Flush();
+                }
+                catch (Exception ex)
+                {
+                    WriteToFile = false; // disable writing to file to avoid spam message boxes
+                    PrintException("Failed to write to log", ex);
+                    MessageBox.Show($"Logging to file has been disabled due to an error. Please check permissions on the \"{Folders.Logs}\" folder or disable logging through the settings file.", "FreeBitcoin Claimer", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                finally
+                {
+                    if (writer != null)
+                        writer.Close();
+                }
+            }
+        }
+    }
+}
