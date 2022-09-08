@@ -1,5 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.CodeDom;
+using System.Diagnostics;
 using System.Globalization;
 
 namespace FreebitcoinClaimer.Utility
@@ -11,24 +13,18 @@ namespace FreebitcoinClaimer.Utility
 
         internal static void Load()
         {
-            /*
-             * Make sure the config directory exists 
-             */
+            // Make sure the config directory exists 
             if (!Directory.Exists(Folders.Configuration))
                 Directory.CreateDirectory(Folders.Configuration);
 
             Logger.Info($"Loading settings from \"{SettingsFile}\"");
 
-            /*
-             * Check if settings exist
-             */
+            // Check if settings exist
             if (File.Exists(SettingsFile))
             {
                 try
                 {
-                    /*
-                     * Load settings from JSON
-                     */
+                    // Load settings from JSON
                     root = Util.ReadJson<JToken>(SettingsFile);
                 }
                 catch (JsonSerializationException ex)
@@ -82,7 +78,7 @@ namespace FreebitcoinClaimer.Utility
         {
             var node = GetTokenByPath(key);
 
-            if (node == null || !(node is JProperty) || (node as JProperty)!.Value.Type != JTokenType.String)
+            if (node == null || node is not JProperty || (node as JProperty)!.Value.Type != JTokenType.String)
                 return defaultValue;
 
             return (node as JProperty)!.Value.ToString();
@@ -92,14 +88,16 @@ namespace FreebitcoinClaimer.Utility
         {
             var node = GetTokenByPath(key);
 
-            if (node == null || !(node is JProperty) || (node as JProperty)!.Value.Type != JTokenType.Bytes)
+            if (node == null || node is not JProperty || (node as JProperty)!.Value.Type != JTokenType.Bytes)
                 return defaultValue;
 
             string strValue = (node as JProperty)!.Value.ToString();
-            byte value = defaultValue;
 
-            if (!byte.TryParse(strValue, out value))
+            if (!byte.TryParse(strValue, out byte value))
+            {
                 Logger.Warn("Failed to parse \"{0}\" as byte", strValue);
+                return defaultValue;
+            }
 
             return value;
         }
@@ -108,14 +106,16 @@ namespace FreebitcoinClaimer.Utility
         {
             var node = GetTokenByPath(key);
 
-            if (node == null || !(node is JProperty) || (node as JProperty)!.Value.Type != JTokenType.Integer)
+            if (node == null || node is not JProperty || (node as JProperty)!.Value.Type != JTokenType.Integer)
                 return defaultValue;
 
             string strValue = (node as JProperty)!.Value.ToString();
-            int value = defaultValue;
 
-            if (!int.TryParse(strValue, out value))
+            if (!int.TryParse(strValue, out int value))
+            {
                 Logger.Warn("Failed to parse \"{0}\" as integer", strValue);
+                return defaultValue;
+            }
 
             return value;
         }
@@ -124,14 +124,16 @@ namespace FreebitcoinClaimer.Utility
         {
             var node = GetTokenByPath(key);
 
-            if (node == null || !(node is JProperty) || (node as JProperty)!.Value.Type != JTokenType.Float)
+            if (node == null || node is not JProperty || (node as JProperty)!.Value.Type != JTokenType.Float)
                 return defaultValue;
 
             string strValue = (node as JProperty)!.Value.ToString();
-            float value = defaultValue;
 
-            if (!float.TryParse(strValue, NumberStyles.Float, CultureInfo.InvariantCulture, out value))
+            if (!float.TryParse(strValue, NumberStyles.Float, CultureInfo.InvariantCulture, out float value))
+            {
                 Logger.Warn("Failed to parse \"{0}\" as float", strValue);
+                return defaultValue;
+            }
 
             return value;
         }
@@ -140,14 +142,16 @@ namespace FreebitcoinClaimer.Utility
         {
             var node = GetTokenByPath(key);
 
-            if (node == null || !(node is JProperty) || (node as JProperty)!.Value.Type != JTokenType.Boolean)
+            if (node == null || node is not JProperty || (node as JProperty)!.Value.Type != JTokenType.Boolean)
                 return defaultValue;
 
             string strValue = (node as JProperty)!.Value.ToString();
-            bool value = defaultValue;
 
-            if (!bool.TryParse(strValue, out value))
+            if (!bool.TryParse(strValue, out bool value))
+            {
                 Logger.Warn("Failed to parse \"{0}\" as boolean", strValue);
+                return defaultValue;
+            }
 
             return value;
         }
@@ -184,10 +188,31 @@ namespace FreebitcoinClaimer.Utility
             Logger.Trace($"Setting key \"{key}\" to \"{value}\"");
 
             string[] parts = key.Split('.');
-            JToken currentNode = root!;
+            JToken currentToken = root!;
 
-            // TODO: Finish Implementation
-            throw new NotImplementedException();
+            for (int i = 0; i < parts.Length; i++)  
+            {
+                if (currentToken is not JObject)
+                {
+                    Logger.Error("{0} is not a JObject", string.Join(".", parts.Take(i + 1)));
+                    return;
+                }
+
+                var mappingToken = currentToken as JObject;
+
+                if (!mappingToken!.ContainsKey(parts[i]))
+                {
+                    if (i == parts.Length - 1)
+                        mappingToken.Add(new JProperty(parts[i], null!));
+                    else
+                        mappingToken.Add(new JProperty(parts[i], new JObject()));
+                }
+
+                if (i == parts.Length - 1)
+                    (currentToken[parts[i]]!.Parent! as JProperty)!.Value = JToken.FromObject(value);
+                else
+                    currentToken = currentToken[parts[i]]!;
+            }
         }
     }
 }

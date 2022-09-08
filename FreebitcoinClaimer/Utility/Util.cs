@@ -15,7 +15,7 @@ namespace FreebitcoinClaimer.Utility
             if (string.IsNullOrEmpty(productName))
                 return "Unknown";
 
-            StringBuilder name = new StringBuilder();
+            StringBuilder name = new();
 
             if (!productName.StartsWith("Microsoft"))
                 name.Append("Microsoft ");
@@ -24,7 +24,7 @@ namespace FreebitcoinClaimer.Utility
 
             if (!string.IsNullOrEmpty(csdVersion))
             {
-                name.Append(" ");
+                name.Append(' ');
                 name.Append(csdVersion);
             }
 
@@ -63,7 +63,7 @@ namespace FreebitcoinClaimer.Utility
 
         internal static JsonSerializerSettings GetJsonSerializerSettings(bool prettyPrint = false)
         {
-            JsonSerializerSettings settings = new JsonSerializerSettings()
+            JsonSerializerSettings settings = new()
             {
                 Formatting = prettyPrint ? Formatting.Indented : Formatting.None
             };
