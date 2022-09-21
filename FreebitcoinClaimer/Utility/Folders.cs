@@ -5,5 +5,6 @@
         internal static readonly string Data = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FreeBitcoin Claimer");
         internal static readonly string Configuration = Path.Combine(Data, "Config");
         internal static readonly string Logs = Path.Combine(Data, "Logs");
+        internal static readonly string ChromeProfile = Path.Combine(Data, "Chrome", "Profile");
     }
 }

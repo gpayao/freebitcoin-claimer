@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FreebitcoinClaimer.Utility;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -8,11 +9,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace FreebitcoinClaimer
+namespace FreebitcoinClaimer.UI
 {
     public partial class MainForm : Form
     {
         private NotifyIcon notifyIcon;
+
+        private bool Running = false;
 
         public MainForm()
         {
@@ -59,11 +62,36 @@ namespace FreebitcoinClaimer
                 this.Hide();
             }
         }
-        
+
         private void ShowForm()
         {
-            this.WindowState = FormWindowState.Normal;
             this.Show();
+            this.WindowState = FormWindowState.Normal;
+        }
+
+        private void actionButton_Click(object sender, EventArgs e)
+        {
+            if (Running)
+            {
+                var dialogResult = MessageBox.Show("Claimer is still running.\nWould you like to stop claiming?", "Freebitcoin Claimer", MessageBoxButtons.YesNo);
+
+                if (dialogResult == DialogResult.No)
+                    return;
+            }
+
+            Running = !Running;
+            actionButton.Text = Running ? "Running" : "Claim";
+
+            if (Running)
+                FreebitcoinControl.StopClaimer();
+            else
+                FreebitcoinControl.StartClaimer();
+        }
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            notifyIcon.Visible = false;
+            FreebitcoinControl.Quit();
         }
     }
 }

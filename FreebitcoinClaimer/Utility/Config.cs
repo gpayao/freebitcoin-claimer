@@ -1,7 +1,5 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.CodeDom;
-using System.Diagnostics;
 using System.Globalization;
 
 namespace FreebitcoinClaimer.Utility
