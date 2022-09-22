@@ -26,9 +26,12 @@ namespace FreebitcoinClaimer.Utility
                 PageLoadStrategy = PageLoadStrategy.Normal
             };
 
-            options.AddArgument("user-data-dir=" + Folders.ChromeProfile);
-            options.AddArgument("--start-maximized");
-            options.AddArgument("--window-size=1920,1080");
+            options.AddArguments(
+                "user-data-dir=" + Folders.ChromeProfile,
+                "--start-maximized", 
+                "--window-size=1920,1080", 
+                "--disable-notifications"
+                );
 
             if (headless)
                 options.AddArgument("headless");
@@ -37,36 +40,33 @@ namespace FreebitcoinClaimer.Utility
             return options;
         }
 
-        public static bool TestLogin()
-        {
-            if (Driver is null)
-                SetUpDriver();
-
-
-            Driver!.Navigate().GoToUrl(FreebitcoinHomePage);
-            if (Driver.FindElements(By.CssSelector("#balance_small")).Count > 0)
-                return true;
-
-            return false;
-
-
-        }
-
-        private static void SetUpDriver()
+        internal static void Setup()
         {
             var chromeService = ChromeDriverService.CreateDefaultService();
             chromeService.HideCommandPromptWindow = true;
             chromeService.SuppressInitialDiagnosticInformation = true;
 
-            Driver = new ChromeDriver(chromeService, GetDefaultOptions(true));
+            Driver = new ChromeDriver(chromeService, GetDefaultOptions(false));
             JavaScriptExecutor = (IJavaScriptExecutor)Driver;
+
+            Driver.Navigate().GoToUrl(FreebitcoinHomePage);
+        }
+
+        public static bool NeedLogin()
+        {
+            try
+            {
+                Driver.FindElement(By.CssSelector("#balance_small"));
+                return true;
+            }
+            catch (NoSuchElementException)
+            {
+                return false;
+            }
         }
 
         public static bool Login(string username, string password, string fa, out string errorMessage)
         {
-            if (Driver is null)
-                SetUpDriver();
-
             errorMessage = string.Empty;
 
             if (!Driver!.Url.Contains("signup"))
@@ -88,32 +88,27 @@ namespace FreebitcoinClaimer.Utility
             faInput.Clear();
             faInput.SendKeys(fa);
 
-            if (Driver.FindElements(By.CssSelector(".pushpad_deny_button")).Count > 0
-                && Driver.FindElement(By.CssSelector(".pushpad_deny_button")).Displayed)
-                Driver.FindElement(By.CssSelector(".pushpad_deny_button")).Click();
-
             Driver.FindElement(By.CssSelector("#login_button")).Click();
 
             Thread.Sleep(2000);
 
-            if (Driver.FindElements(By.CssSelector("#reward_point_redeem_result_container_div")).Count > 0)
+            try
+            {
+                Driver.FindElement(By.CssSelector("#balance_small"));
+                return true;
+            }
+            catch (NoSuchElementException)
             {
                 errorMessage = Driver.FindElement(By.CssSelector("#reward_point_redeem_result_container_div span.reward_point_redeem_result")).Text;
                 return false;
             }
-
-            return true;
-
         }
 
         private static void Claim(object? sender, System.Timers.ElapsedEventArgs e)
         {
-            if (Driver is null)
-                SetUpDriver();
+            IWebElement claimButton = Driver.FindElement(By.CssSelector(""));
 
-            var currentUrl = Driver.Url;
-
-            //balance_small
+            claimButton.Click();
         }
 
         public static void StartClaimer()
@@ -131,9 +126,7 @@ namespace FreebitcoinClaimer.Utility
         public static void Quit()
         {
             if (Driver is not null)
-            {
                 Driver.Quit();
-            }
         }
     }
 }

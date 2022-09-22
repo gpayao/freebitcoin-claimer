@@ -27,7 +27,7 @@ namespace FreebitcoinClaimer
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
 
-            if (!FreebitcoinControl.TestLogin())
+            if (!FreebitcoinControl.NeedLogin())
                 Application.Run(new LoginForm());
 
             Application.Run(new MainForm());
@@ -56,6 +56,8 @@ namespace FreebitcoinClaimer
             Logger.Info("Loading browser driver");
 
             new DriverManager().SetUpDriver(new ChromeConfig(), VersionResolveStrategy.MatchingBrowser);
+
+            FreebitcoinControl.Setup();
         }
 
         internal static void Shutdown()

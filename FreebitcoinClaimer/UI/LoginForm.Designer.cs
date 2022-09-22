@@ -36,6 +36,7 @@
             this.faLabel = new System.Windows.Forms.Label();
             this.faTextBox = new System.Windows.Forms.TextBox();
             this.loginButton = new System.Windows.Forms.Button();
+            this.clockLabel = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // emailAddressTextBox
@@ -77,6 +78,7 @@
             // 
             this.passwordTextBox.Location = new System.Drawing.Point(12, 107);
             this.passwordTextBox.Name = "passwordTextBox";
+            this.passwordTextBox.PasswordChar = '*';
             this.passwordTextBox.Size = new System.Drawing.Size(253, 23);
             this.passwordTextBox.TabIndex = 2;
             // 
@@ -101,16 +103,27 @@
             this.loginButton.Location = new System.Drawing.Point(12, 190);
             this.loginButton.Name = "loginButton";
             this.loginButton.Size = new System.Drawing.Size(253, 23);
-            this.loginButton.TabIndex = 7;
+            this.loginButton.TabIndex = 4;
             this.loginButton.Text = "Login";
             this.loginButton.UseVisualStyleBackColor = true;
-            this.loginButton.Click += new System.EventHandler(this.loginButton_Click);
+            this.loginButton.Click += new System.EventHandler(this.LoginButton_Click);
+            // 
+            // clockLabel
+            // 
+            this.clockLabel.AutoSize = true;
+            this.clockLabel.Location = new System.Drawing.Point(12, 15);
+            this.clockLabel.Name = "clockLabel";
+            this.clockLabel.Size = new System.Drawing.Size(34, 15);
+            this.clockLabel.TabIndex = 0;
+            this.clockLabel.Text = "00:00";
+            this.clockLabel.Visible = false;
             // 
             // LoginForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(277, 227);
+            this.Controls.Add(this.clockLabel);
             this.Controls.Add(this.loginButton);
             this.Controls.Add(this.faLabel);
             this.Controls.Add(this.faTextBox);
@@ -143,5 +156,6 @@
         private Label faLabel;
         private TextBox faTextBox;
         private Button loginButton;
+        private Label clockLabel;
     }
 }
