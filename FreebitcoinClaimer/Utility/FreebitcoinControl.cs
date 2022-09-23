@@ -1,11 +1,5 @@
 ﻿using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
-using OpenQA.Selenium.DevTools.V102.CSS;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace FreebitcoinClaimer.Utility
 {
@@ -17,7 +11,7 @@ namespace FreebitcoinClaimer.Utility
         private static IWebDriver Driver;
         private static IJavaScriptExecutor JavaScriptExecutor;
 
-        private static System.Timers.Timer Timer;
+        private static System.Timers.Timer ClaimTimer;
 
         private static ChromeOptions GetDefaultOptions(bool headless = false)
         {
@@ -28,8 +22,8 @@ namespace FreebitcoinClaimer.Utility
 
             options.AddArguments(
                 "user-data-dir=" + Folders.ChromeProfile,
-                "--start-maximized", 
-                "--window-size=1920,1080", 
+                "--start-maximized",
+                "--window-size=1920,1080",
                 "--disable-notifications"
                 );
 
@@ -46,8 +40,11 @@ namespace FreebitcoinClaimer.Utility
             chromeService.HideCommandPromptWindow = true;
             chromeService.SuppressInitialDiagnosticInformation = true;
 
-            Driver = new ChromeDriver(chromeService, GetDefaultOptions(false));
+            // TODO: change this to be related to the log-level debug
+            Driver = new ChromeDriver(chromeService, GetDefaultOptions(true));
             JavaScriptExecutor = (IJavaScriptExecutor)Driver;
+
+            ClaimTimer = new System.Timers.Timer();
 
             Driver.Navigate().GoToUrl(FreebitcoinHomePage);
         }
@@ -104,23 +101,43 @@ namespace FreebitcoinClaimer.Utility
             }
         }
 
-        private static void Claim(object? sender, System.Timers.ElapsedEventArgs e)
+        public static string GetBalance()
         {
-            IWebElement claimButton = Driver.FindElement(By.CssSelector(""));
-
-            claimButton.Click();
+            return Driver.FindElement(By.CssSelector("#balance")).Text;
         }
 
         public static void StartClaimer()
         {
-            Timer = new System.Timers.Timer(TimeSpan.FromMinutes(ClaimInterval).TotalMilliseconds);
-            Timer.Elapsed += Claim;
-            Timer.Start();
+            try
+            {
+                int minutesRemaining = int.Parse(Driver.FindElement(By.CssSelector("#time_remaining > span.countdown_row.countdown_show2 > span.countdown_section:first-child > span.countdown_amount")).Text);
+
+                ClaimTimer.Interval = TimeSpan.FromMinutes(minutesRemaining + 1).TotalMilliseconds;
+            }
+            catch (NoSuchElementException)
+            {
+                ClaimTimer.Interval = 1000;
+            }
+
+            ClaimTimer.Elapsed += Claim;
+            ClaimTimer.Start();
+        }
+
+        private static void Claim(object? sender, System.Timers.ElapsedEventArgs e)
+        {
+            ClaimTimer.Stop();
+            IWebElement rollButton = Driver.FindElement(By.CssSelector("#free_play_form_button"));
+
+            if (rollButton.Displayed)
+                rollButton.SendKeys(" "); // TODO: Change this. Click does not interact with the element. STUPID!
+
+            ClaimTimer.Interval = TimeSpan.FromMinutes(ClaimInterval).TotalMilliseconds;
+            ClaimTimer.Start();
         }
 
         public static void StopClaimer()
         {
-            Timer.Stop();
+            ClaimTimer.Stop();
         }
 
         public static void Quit()

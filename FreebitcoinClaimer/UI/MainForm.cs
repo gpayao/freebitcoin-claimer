@@ -1,19 +1,11 @@
 ﻿using FreebitcoinClaimer.Utility;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace FreebitcoinClaimer.UI
 {
     public partial class MainForm : Form
     {
         private NotifyIcon notifyIcon;
+        private System.Timers.Timer UpdateBalanceTimer = new System.Timers.Timer(1000);
 
         private bool Running = false;
 
@@ -42,7 +34,17 @@ namespace FreebitcoinClaimer.UI
             };
 
             notifyIcon.BalloonTipClicked += (a, b) => { ShowForm(); };
+
+            UpdateBalanceTimer.Elapsed += UpdateBalanceTimer_Elapsed;
+            UpdateBalanceTimer.Start();
         }
+
+        delegate void UpdateBalanceTimerCallback();
+        private void UpdateBalanceTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e) =>
+            this.Invoke(new UpdateBalanceTimerCallback(UpdateBalance));
+
+        private void UpdateBalance() =>
+            currentBalanceValueLabel.Text = FreebitcoinControl.GetBalance();
 
         /**
          * Shows a simple notification with the specified text for 5 seconds.
@@ -69,7 +71,7 @@ namespace FreebitcoinClaimer.UI
             this.WindowState = FormWindowState.Normal;
         }
 
-        private void actionButton_Click(object sender, EventArgs e)
+        private void ActionButton_Click(object sender, EventArgs e)
         {
             if (Running)
             {
@@ -79,13 +81,13 @@ namespace FreebitcoinClaimer.UI
                     return;
             }
 
-            Running = !Running;
-            actionButton.Text = Running ? "Running" : "Claim";
-
             if (Running)
                 FreebitcoinControl.StopClaimer();
             else
                 FreebitcoinControl.StartClaimer();
+
+            actionButton.Text = Running ? "Start" : "Stop";
+            Running = !Running;
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)

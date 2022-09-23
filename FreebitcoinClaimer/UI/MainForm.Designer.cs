@@ -30,6 +30,8 @@
         {
             this.header = new System.Windows.Forms.Label();
             this.actionButton = new System.Windows.Forms.Button();
+            this.currentBalanceLabel = new System.Windows.Forms.Label();
+            this.currentBalanceValueLabel = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // header
@@ -47,22 +49,43 @@
             this.actionButton.Name = "actionButton";
             this.actionButton.Size = new System.Drawing.Size(192, 23);
             this.actionButton.TabIndex = 1;
-            this.actionButton.Text = "Claim";
+            this.actionButton.Text = "Start";
             this.actionButton.UseVisualStyleBackColor = true;
-            this.actionButton.Click += new System.EventHandler(this.actionButton_Click);
+            this.actionButton.Click += new System.EventHandler(this.ActionButton_Click);
+            // 
+            // currentBalanceLabel
+            // 
+            this.currentBalanceLabel.Location = new System.Drawing.Point(12, 72);
+            this.currentBalanceLabel.Name = "currentBalanceLabel";
+            this.currentBalanceLabel.Size = new System.Drawing.Size(192, 23);
+            this.currentBalanceLabel.TabIndex = 2;
+            this.currentBalanceLabel.Text = "Current Balance";
+            this.currentBalanceLabel.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            // 
+            // currentBalanceValueLabel
+            // 
+            this.currentBalanceValueLabel.Font = new System.Drawing.Font("Segoe UI Semibold", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.currentBalanceValueLabel.ForeColor = System.Drawing.Color.Green;
+            this.currentBalanceValueLabel.Location = new System.Drawing.Point(12, 95);
+            this.currentBalanceValueLabel.Name = "currentBalanceValueLabel";
+            this.currentBalanceValueLabel.Size = new System.Drawing.Size(192, 23);
+            this.currentBalanceValueLabel.TabIndex = 3;
+            this.currentBalanceValueLabel.Text = "0.00000000";
+            this.currentBalanceValueLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(216, 72);
+            this.ClientSize = new System.Drawing.Size(216, 126);
+            this.Controls.Add(this.currentBalanceValueLabel);
+            this.Controls.Add(this.currentBalanceLabel);
             this.Controls.Add(this.actionButton);
             this.Controls.Add(this.header);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = global::FreebitcoinClaimer.Resources.icon;
             this.MaximizeBox = false;
-            this.MaximumSize = new System.Drawing.Size(232, 111);
-            this.MinimumSize = new System.Drawing.Size(232, 111);
+            this.MdiChildrenMinimizedAnchorBottom = false;
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "FreeBitcoin Claimer";
@@ -76,5 +99,7 @@
 
         private Label header;
         private Button actionButton;
+        private Label currentBalanceLabel;
+        private Label currentBalanceValueLabel;
     }
 }
