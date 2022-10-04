@@ -125,6 +125,7 @@ namespace FreebitcoinClaimer.Utility
 
         private static void Claim(object? sender, System.Timers.ElapsedEventArgs e)
         {
+            Driver.Navigate().Refresh();
             ClaimTimer.Stop();
             IWebElement rollButton = Driver.FindElement(By.CssSelector("#free_play_form_button"));
 

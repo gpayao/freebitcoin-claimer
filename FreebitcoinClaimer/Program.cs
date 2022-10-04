@@ -1,5 +1,4 @@
 using FreebitcoinClaimer.Utility;
-using WebDriverManager.DriverConfigs.Impl;
 using WebDriverManager.Helpers;
 using WebDriverManager;
 using FreebitcoinClaimer.UI;
@@ -55,7 +54,11 @@ namespace FreebitcoinClaimer
         {
             Logger.Info("Loading browser driver");
 
-            new DriverManager().SetUpDriver(new ChromeConfig(), VersionResolveStrategy.MatchingBrowser);
+            new DriverManager()
+                .SetUpDriver(
+                    config: new FreebitcoinClaimerBrowserConfig(), 
+                    version: VersionResolveStrategy.MatchingBrowser
+                    );
 
             FreebitcoinControl.Setup();
         }
