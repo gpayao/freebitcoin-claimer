@@ -2,6 +2,7 @@ using FreebitcoinClaimer.Utility;
 using WebDriverManager.Helpers;
 using WebDriverManager;
 using FreebitcoinClaimer.UI;
+using FreebitcoinClaimer.Types;
 
 namespace FreebitcoinClaimer
 {

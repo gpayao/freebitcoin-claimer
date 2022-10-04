@@ -1,6 +1,7 @@
-﻿using WebDriverManager.DriverConfigs.Impl;
+﻿using FreebitcoinClaimer.Utility;
+using WebDriverManager.DriverConfigs.Impl;
 
-namespace FreebitcoinClaimer.Utility
+namespace FreebitcoinClaimer.Types
 {
     public class FreebitcoinClaimerBrowserConfig : ChromeConfig
     {

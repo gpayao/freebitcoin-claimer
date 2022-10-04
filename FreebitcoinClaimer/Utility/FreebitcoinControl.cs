@@ -1,20 +1,27 @@
-﻿using OpenQA.Selenium;
+﻿using FreebitcoinClaimer.Types;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using System.Globalization;
 
 namespace FreebitcoinClaimer.Utility
 {
-    public static class FreebitcoinControl
+    public class FreebitcoinControl
     {
-        private static string FreebitcoinHomePage = "https://freebitco.in/";
-        private static double ClaimInterval = 60;
+        private static readonly string FreebitcoinHomePage = "https://freebitco.in/";
+        private static readonly double ClaimInterval = 60;
 
-        private static IWebDriver Driver;
-        private static IJavaScriptExecutor JavaScriptExecutor;
+        private static IWebDriver? Driver;
 
-        private static System.Timers.Timer ClaimTimer;
+        private static readonly System.Timers.Timer ClaimTimer = new();
 
-        private static ChromeOptions GetDefaultOptions(bool headless = false)
+        internal static void Setup()
         {
+            Logger.Info("Starting Chrome Driver");
+
+            var chromeService = ChromeDriverService.CreateDefaultService();
+            chromeService.HideCommandPromptWindow = true;
+            chromeService.SuppressInitialDiagnosticInformation = true;
+
             var options = new ChromeOptions
             {
                 PageLoadStrategy = PageLoadStrategy.Normal
@@ -27,31 +34,21 @@ namespace FreebitcoinClaimer.Utility
                 "--disable-notifications"
                 );
 
-            if (headless)
+            if (Logger.Level != LogLevel.Debug)
                 options.AddArgument("headless");
 
-            return options;
-        }
-
-        internal static void Setup()
-        {
-            var chromeService = ChromeDriverService.CreateDefaultService();
-            chromeService.HideCommandPromptWindow = true;
-            chromeService.SuppressInitialDiagnosticInformation = true;
-
-            Driver = new ChromeDriver(chromeService, GetDefaultOptions(Logger.Level != LogLevel.Debug));
-            JavaScriptExecutor = (IJavaScriptExecutor)Driver;
-
-            ClaimTimer = new System.Timers.Timer();
+            Driver = new ChromeDriver(chromeService, options);
 
             Driver.Navigate().GoToUrl(FreebitcoinHomePage);
+
+            ClaimTimer.Elapsed += Claim;
         }
 
         public static bool NeedLogin()
         {
             try
             {
-                Driver.FindElement(By.CssSelector("#balance_small"));
+                Driver!.FindElement(By.CssSelector("#balance"));
                 return true;
             }
             catch (NoSuchElementException)
@@ -62,6 +59,8 @@ namespace FreebitcoinClaimer.Utility
 
         public static bool Login(string username, string password, string fa, out string errorMessage)
         {
+            Logger.Info("Logging in");
+
             errorMessage = string.Empty;
 
             if (!Driver!.Url.Contains("signup"))
@@ -89,7 +88,7 @@ namespace FreebitcoinClaimer.Utility
 
             try
             {
-                Driver.FindElement(By.CssSelector("#balance_small"));
+                Driver.FindElement(By.CssSelector("#balance"));
                 return true;
             }
             catch (NoSuchElementException)
@@ -99,16 +98,33 @@ namespace FreebitcoinClaimer.Utility
             }
         }
 
-        public static string GetBalance()
+        public static double GetBalance()
         {
-            return Driver.FindElement(By.CssSelector("#balance")).Text;
+            return double.Parse(Driver!.FindElement(By.CssSelector("#balance")).Text, CultureInfo.InvariantCulture);
+        }
+
+        public static string GetResult()
+        {
+            var winningsText = Driver!.FindElement(By.CssSelector("#free_play_result winnings")).Text;
+
+            if (string.IsNullOrEmpty(winningsText))
+                return "";
+
+            var winnings = double.Parse(winningsText, CultureInfo.InvariantCulture);
+            var digits = Driver!.FindElements(By.CssSelector("#free_play_digits span"));
+
+            var rolledNumber = string.Join("", digits.Select(e => e.Text));
+
+            return $"Rolled \"{rolledNumber}\" and won \"{winnings}\".";
         }
 
         public static void StartClaimer()
         {
+            Logger.Trace("Starting claimer clock");
+
             try
             {
-                int minutesRemaining = int.Parse(Driver.FindElement(By.CssSelector("#time_remaining > span.countdown_row.countdown_show2 > span.countdown_section:first-child > span.countdown_amount")).Text);
+                int minutesRemaining = int.Parse(Driver!.FindElement(By.CssSelector("#time_remaining > span.countdown_row.countdown_show2 > span.countdown_section:first-child > span.countdown_amount")).Text);
 
                 ClaimTimer.Interval = TimeSpan.FromMinutes(minutesRemaining + 1).TotalMilliseconds;
             }
@@ -117,14 +133,24 @@ namespace FreebitcoinClaimer.Utility
                 ClaimTimer.Interval = 1000;
             }
 
-            ClaimTimer.Elapsed += Claim;
             ClaimTimer.Start();
+        }
+
+        public static void StopClaimer()
+        {
+            Logger.Trace("Stopping claimer clock");
+
+            ClaimTimer.Stop();
         }
 
         private static void Claim(object? sender, System.Timers.ElapsedEventArgs e)
         {
-            Driver.Navigate().Refresh();
+            Logger.Info("Claiming");
+
             ClaimTimer.Stop();
+
+            Driver!.Navigate().Refresh();
+
             IWebElement rollButton = Driver.FindElement(By.CssSelector("#free_play_form_button"));
 
             if (rollButton.Displayed)
@@ -134,13 +160,10 @@ namespace FreebitcoinClaimer.Utility
             ClaimTimer.Start();
         }
 
-        public static void StopClaimer()
-        {
-            ClaimTimer.Stop();
-        }
-
         public static void Quit()
         {
+            Logger.Trace("Closing Chrome Driver");
+
             if (Driver is not null)
                 Driver.Quit();
         }
