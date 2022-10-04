@@ -30,7 +30,6 @@ namespace FreebitcoinClaimer.Utility
             if (headless)
                 options.AddArgument("headless");
 
-
             return options;
         }
 
@@ -40,8 +39,7 @@ namespace FreebitcoinClaimer.Utility
             chromeService.HideCommandPromptWindow = true;
             chromeService.SuppressInitialDiagnosticInformation = true;
 
-            // TODO: change this to be related to the log-level debug
-            Driver = new ChromeDriver(chromeService, GetDefaultOptions(true));
+            Driver = new ChromeDriver(chromeService, GetDefaultOptions(Logger.Level == LogLevel.Debug));
             JavaScriptExecutor = (IJavaScriptExecutor)Driver;
 
             ClaimTimer = new System.Timers.Timer();
