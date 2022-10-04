@@ -39,7 +39,7 @@ namespace FreebitcoinClaimer.Utility
             chromeService.HideCommandPromptWindow = true;
             chromeService.SuppressInitialDiagnosticInformation = true;
 
-            Driver = new ChromeDriver(chromeService, GetDefaultOptions(Logger.Level == LogLevel.Debug));
+            Driver = new ChromeDriver(chromeService, GetDefaultOptions(Logger.Level != LogLevel.Debug));
             JavaScriptExecutor = (IJavaScriptExecutor)Driver;
 
             ClaimTimer = new System.Timers.Timer();
