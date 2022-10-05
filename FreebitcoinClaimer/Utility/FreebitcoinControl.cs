@@ -1,6 +1,7 @@
 ﻿using FreebitcoinClaimer.Types;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using System.Drawing.Printing;
 using System.Globalization;
 
 namespace FreebitcoinClaimer.Utility
@@ -8,11 +9,8 @@ namespace FreebitcoinClaimer.Utility
     public class FreebitcoinControl
     {
         private static readonly string FreebitcoinHomePage = "https://freebitco.in/";
-        private static readonly double ClaimInterval = 60;
 
         private static IWebDriver? Driver;
-
-        private static readonly System.Timers.Timer ClaimTimer = new();
 
         internal static void Setup()
         {
@@ -40,8 +38,6 @@ namespace FreebitcoinClaimer.Utility
             Driver = new ChromeDriver(chromeService, options);
 
             Driver.Navigate().GoToUrl(FreebitcoinHomePage);
-
-            ClaimTimer.Elapsed += Claim;
         }
 
         public static bool NeedLogin()
@@ -105,65 +101,73 @@ namespace FreebitcoinClaimer.Utility
 
         public static string GetResult()
         {
-            var winningsText = Driver!.FindElement(By.CssSelector("#free_play_result winnings")).Text;
-
-            if (string.IsNullOrEmpty(winningsText))
-                return "";
-
-            var winnings = double.Parse(winningsText, CultureInfo.InvariantCulture);
-            var digits = Driver!.FindElements(By.CssSelector("#free_play_digits span"));
-
-            var rolledNumber = string.Join("", digits.Select(e => e.Text));
-
-            return $"Rolled \"{rolledNumber}\" and won \"{winnings}\".";
+            throw new NotImplementedException();
         }
 
-        public static void StartClaimer()
+        public static int GetCountdownMinutes()
         {
-            Logger.Trace("Starting claimer clock");
+            string minutesRemainingText;
 
             try
             {
-                int minutesRemaining = int.Parse(Driver!.FindElement(By.CssSelector("#time_remaining > span.countdown_row.countdown_show2 > span.countdown_section:first-child > span.countdown_amount")).Text);
-
-                ClaimTimer.Interval = TimeSpan.FromMinutes(minutesRemaining + 1).TotalMilliseconds;
+                IWebElement countdownElement = Driver!.FindElement(By.CssSelector("#time_remaining > span.countdown_row.countdown_show2 > span.countdown_section:first-child > span.countdown_amount"));
+                minutesRemainingText = countdownElement.Text;
             }
             catch (NoSuchElementException)
             {
-                ClaimTimer.Interval = 1000;
+                minutesRemainingText = "";
             }
 
-            ClaimTimer.Start();
+            if (!int.TryParse(minutesRemainingText, out int result))
+                return 0;
+
+            return result;
         }
 
-        public static void StopClaimer()
+        public static List<string> GetHistory()
         {
-            Logger.Trace("Stopping claimer clock");
+            var output = new List<string>();
+            try
+            {
+                var rowsElements = Driver!.FindElements(By.CssSelector("#bet_history_table_rows .multiply_bet_history_table_row"));
 
-            ClaimTimer.Stop();
+                if (rowsElements.Count == 0)
+                {
+                    Driver.FindElement(By.CssSelector(".top-bar-section a.double_your_btc_link")).Click();
+                    rowsElements = Driver!.FindElements(By.CssSelector("#bet_history_table_rows .multiply_bet_history_table_row"));
+                }
+
+                foreach (var row in rowsElements)
+                {
+                    var resultDiv = row.FindElement(By.CssSelector("div:first-child"));
+
+                    var time = resultDiv.FindElement(By.CssSelector("div:nth-child(1)")).Text;
+                    var roll = resultDiv.FindElement(By.CssSelector("div:nth-child(4)")).Text;
+                    var profit = resultDiv.FindElement(By.CssSelector("div:nth-child(7) font")).Text;
+
+                    output.Add($"{time}|{roll}|{profit}");
+                }
+            }
+            catch (NoSuchElementException)
+            {
+                throw;
+            }
+
+            return output;
         }
 
-        private static void Claim(object? sender, System.Timers.ElapsedEventArgs e)
+        public static void Claim()
         {
-            Logger.Info("Claiming");
-
-            ClaimTimer.Stop();
-
             Driver!.Navigate().Refresh();
 
             IWebElement rollButton = Driver.FindElement(By.CssSelector("#free_play_form_button"));
 
             if (rollButton.Displayed)
                 rollButton.SendKeys(" "); // TODO: Change this. Click does not interact with the element. STUPID!
-
-            ClaimTimer.Interval = TimeSpan.FromMinutes(ClaimInterval).TotalMilliseconds;
-            ClaimTimer.Start();
         }
 
         public static void Quit()
         {
-            Logger.Trace("Closing Chrome Driver");
-
             if (Driver is not null)
                 Driver.Quit();
         }

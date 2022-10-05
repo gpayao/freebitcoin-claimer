@@ -31,6 +31,8 @@ namespace FreebitcoinClaimer
                 Application.Run(new LoginForm());
 
             Application.Run(new MainForm());
+
+            Shutdown();
         }
         private static void ShowSystemInfo()
         {

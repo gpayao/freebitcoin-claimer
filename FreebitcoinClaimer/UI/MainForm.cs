@@ -4,9 +4,10 @@ namespace FreebitcoinClaimer.UI
 {
     public partial class MainForm : Form
     {
-        private System.Windows.Forms.Timer UpdateTimer = new System.Windows.Forms.Timer();
+        private System.Windows.Forms.Timer UpdateBalanceTimer = new System.Windows.Forms.Timer();
+        private System.Windows.Forms.Timer ClaimTimer = new System.Windows.Forms.Timer();
 
-        private bool Running = false;
+        private readonly int DefaultClaimInterval = 3600000;
 
         private readonly double InitialBalance = 0;
         private double CurrentBalance = 0;
@@ -17,7 +18,7 @@ namespace FreebitcoinClaimer.UI
 
             notifyIcon.Text = "Freebitcoin Claimer";
             notifyIcon.ContextMenuStrip = new ContextMenuStrip();
-            
+
             var menuItemName = new ToolStripMenuItem(Program.APP_Name + " " + Program.VERSION) { Enabled = false };
             var menuItemQuit = new ToolStripMenuItem("Quit", null, (a, b) => this.Close());
 
@@ -32,9 +33,12 @@ namespace FreebitcoinClaimer.UI
 
             notifyIcon.BalloonTipClicked += (a, b) => { ShowForm(); };
 
-            UpdateTimer.Tick += UpdateBalanceTimer_Tick;
-            UpdateTimer.Enabled = true;
-            UpdateTimer.Interval = 1000;
+            UpdateBalanceTimer.Tick += UpdateBalance_Tick;
+            UpdateBalanceTimer.Interval = 1000;
+            UpdateBalanceTimer.Start();
+
+            ClaimTimer.Tick += Claim_Tick;
+            ClaimTimer.Interval = DefaultClaimInterval;
 
             var initialBalance = FreebitcoinControl.GetBalance();
 
@@ -44,9 +48,28 @@ namespace FreebitcoinClaimer.UI
             this.currentBalanceValueLabel.Text = CurrentBalance.ToString();
         }
 
-        private void UpdateBalanceTimer_Tick(object? sender, EventArgs e) => UpdateMonitor();
+        private void ActionButton_Click(object sender, EventArgs e)
+        {
+            if (ClaimTimer.Enabled)
+            {
+                var dialogResult = MessageBox.Show("Claimer is still running.\nWould you like to stop claiming?", "Freebitcoin Claimer", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
-        private void UpdateMonitor()
+                if (dialogResult == DialogResult.No)
+                    return;
+
+                ClaimTimer.Stop();
+            }
+            else
+            {
+                SetClaimTimerInterval();
+                ClaimTimer.Start();
+            }
+
+            actionButton.Text = ClaimTimer.Enabled ? "Start" : "Stop";
+            ShowNotification(ClaimTimer.Enabled ? "Started" : "Stopped");
+        }
+
+        private void UpdateBalance_Tick(object? sender, EventArgs e)
         {
             CurrentBalance = FreebitcoinControl.GetBalance();
 
@@ -58,11 +81,27 @@ namespace FreebitcoinClaimer.UI
                 currentBalanceValueLabel.ForeColor = Color.Red;
             else
                 currentBalanceLabel.ForeColor = Color.DarkGreen;
+        }
 
-            var result = FreebitcoinControl.GetResult();
+        private void Claim_Tick(object? sender, EventArgs e)
+        {
+            FreebitcoinControl.Claim();
 
-            if (!string.IsNullOrEmpty(result))
-                logListBox.Items.Add(result);
+            SetClaimTimerInterval();
+
+            ShowNotification("Claimed");
+        }
+
+        private void SetClaimTimerInterval()
+        {
+            int countdown = (FreebitcoinControl.GetCountdownMinutes() + 1) * 60000;
+            ClaimTimer.Interval = countdown;
+        }
+
+        private void ShowForm()
+        {
+            this.Show();
+            this.WindowState = FormWindowState.Normal;
         }
 
         public void ShowNotification(string text)
@@ -78,37 +117,10 @@ namespace FreebitcoinClaimer.UI
                 this.Hide();
         }
 
-        private void ShowForm()
-        {
-            this.Show();
-            this.WindowState = FormWindowState.Normal;
-        }
-
-        private void ActionButton_Click(object sender, EventArgs e)
-        {
-            if (Running)
-            {
-                var dialogResult = MessageBox.Show("Claimer is still running.\nWould you like to stop claiming?", "Freebitcoin Claimer", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                if (dialogResult == DialogResult.No)
-                    return;
-            }
-
-            if (Running)
-                FreebitcoinControl.StopClaimer();
-            else
-                FreebitcoinControl.StartClaimer();
-
-            actionButton.Text = Running ? "Start" : "Stop";
-            Running = !Running;
-
-            ShowNotification(Running ? "Started" : "Stopped");
-        }
-
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             notifyIcon.Visible = false;
-            FreebitcoinControl.Quit();
+            //FreebitcoinControl.Quit();
         }
     }
 }
