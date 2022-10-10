@@ -30,6 +30,7 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this.header = new System.Windows.Forms.Label();
             this.actionButton = new System.Windows.Forms.Button();
             this.currentBalanceLabel = new System.Windows.Forms.Label();
@@ -37,11 +38,16 @@
             this.initialBalanceLabel = new System.Windows.Forms.Label();
             this.initialBalanceValueLabel = new System.Windows.Forms.Label();
             this.notifyIcon = new System.Windows.Forms.NotifyIcon(this.components);
-            this.dataGridView1 = new System.Windows.Forms.DataGridView();
+            this.contextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.appNameMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.actionMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.quitMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.resultGridView = new System.Windows.Forms.DataGridView();
             this.Time = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Roll = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Profit = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
+            this.contextMenuStrip.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.resultGridView)).BeginInit();
             this.SuspendLayout();
             // 
             // header
@@ -107,51 +113,101 @@
             // notifyIcon
             // 
             this.notifyIcon.BalloonTipTitle = "FreeBitcoin Claimer";
+            this.notifyIcon.ContextMenuStrip = this.contextMenuStrip;
             this.notifyIcon.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon.Icon")));
             this.notifyIcon.Visible = true;
+            this.notifyIcon.BalloonTipClicked += new System.EventHandler(this.NotifyIcon_Click);
+            this.notifyIcon.Click += new System.EventHandler(this.NotifyIcon_Click);
             // 
-            // dataGridView1
+            // contextMenuStrip
             // 
-            this.dataGridView1.AllowUserToAddRows = false;
-            this.dataGridView1.AllowUserToDeleteRows = false;
-            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.contextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.appNameMenuItem,
+            this.actionMenuItem,
+            this.quitMenuItem});
+            this.contextMenuStrip.Name = "contextMenuStrip";
+            this.contextMenuStrip.Size = new System.Drawing.Size(178, 70);
+            // 
+            // appNameMenuItem
+            // 
+            this.appNameMenuItem.Enabled = false;
+            this.appNameMenuItem.Name = "appNameMenuItem";
+            this.appNameMenuItem.Size = new System.Drawing.Size(177, 22);
+            this.appNameMenuItem.Text = "FreeBitcoin Claimer";
+            // 
+            // actionMenuItem
+            // 
+            this.actionMenuItem.Name = "actionMenuItem";
+            this.actionMenuItem.Size = new System.Drawing.Size(177, 22);
+            this.actionMenuItem.Text = "Start";
+            this.actionMenuItem.Click += new System.EventHandler(this.ActionButton_Click);
+            // 
+            // quitMenuItem
+            // 
+            this.quitMenuItem.Name = "quitMenuItem";
+            this.quitMenuItem.Size = new System.Drawing.Size(177, 22);
+            this.quitMenuItem.Text = "Quit";
+            this.quitMenuItem.Click += new System.EventHandler(this.QuitMenuItem_Click);
+            // 
+            // resultGridView
+            // 
+            this.resultGridView.AccessibleRole = System.Windows.Forms.AccessibleRole.None;
+            this.resultGridView.AllowUserToAddRows = false;
+            this.resultGridView.AllowUserToDeleteRows = false;
+            this.resultGridView.AllowUserToResizeColumns = false;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.TopCenter;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.resultGridView.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            this.resultGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.resultGridView.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.Time,
             this.Roll,
             this.Profit});
-            this.dataGridView1.Enabled = false;
-            this.dataGridView1.Location = new System.Drawing.Point(12, 135);
-            this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.ReadOnly = true;
-            this.dataGridView1.RowHeadersVisible = false;
-            this.dataGridView1.RowTemplate.Height = 25;
-            this.dataGridView1.Size = new System.Drawing.Size(324, 183);
-            this.dataGridView1.TabIndex = 6;
+            this.resultGridView.ImeMode = System.Windows.Forms.ImeMode.Off;
+            this.resultGridView.Location = new System.Drawing.Point(12, 135);
+            this.resultGridView.MultiSelect = false;
+            this.resultGridView.Name = "resultGridView";
+            this.resultGridView.ReadOnly = true;
+            this.resultGridView.RowHeadersVisible = false;
+            this.resultGridView.RowHeadersWidthSizeMode = System.Windows.Forms.DataGridViewRowHeadersWidthSizeMode.DisableResizing;
+            this.resultGridView.RowTemplate.Height = 25;
+            this.resultGridView.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.resultGridView.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.resultGridView.Size = new System.Drawing.Size(324, 183);
+            this.resultGridView.TabIndex = 0;
             // 
             // Time
             // 
             this.Time.HeaderText = "Time";
             this.Time.Name = "Time";
             this.Time.ReadOnly = true;
+            this.Time.Width = 107;
             // 
             // Roll
             // 
             this.Roll.HeaderText = "Roll";
             this.Roll.Name = "Roll";
             this.Roll.ReadOnly = true;
+            this.Roll.Width = 107;
             // 
             // Profit
             // 
             this.Profit.HeaderText = "Profit";
             this.Profit.Name = "Profit";
             this.Profit.ReadOnly = true;
+            this.Profit.Width = 107;
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(348, 330);
-            this.Controls.Add(this.dataGridView1);
+            this.Controls.Add(this.resultGridView);
             this.Controls.Add(this.initialBalanceValueLabel);
             this.Controls.Add(this.initialBalanceLabel);
             this.Controls.Add(this.currentBalanceValueLabel);
@@ -167,7 +223,8 @@
             this.Text = "FreeBitcoin Claimer";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.Resize += new System.EventHandler(this.MainForm_Resize);
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
+            this.contextMenuStrip.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.resultGridView)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -181,9 +238,13 @@
         private Label initialBalanceLabel;
         private Label initialBalanceValueLabel;
         private NotifyIcon notifyIcon;
-        private DataGridView dataGridView1;
+        private DataGridView resultGridView;
         private DataGridViewTextBoxColumn Time;
         private DataGridViewTextBoxColumn Roll;
         private DataGridViewTextBoxColumn Profit;
+        private ContextMenuStrip contextMenuStrip;
+        private ToolStripMenuItem appNameMenuItem;
+        private ToolStripMenuItem quitMenuItem;
+        private ToolStripMenuItem actionMenuItem;
     }
 }

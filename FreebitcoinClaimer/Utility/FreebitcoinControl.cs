@@ -1,7 +1,6 @@
-﻿using FreebitcoinClaimer.Types;
-using OpenQA.Selenium;
+﻿using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
-using System.Drawing.Printing;
+using OpenQA.Selenium.Support.UI;
 using System.Globalization;
 
 namespace FreebitcoinClaimer.Utility
@@ -36,12 +35,12 @@ namespace FreebitcoinClaimer.Utility
                 options.AddArgument("headless");
 
             Driver = new ChromeDriver(chromeService, options);
-
-            Driver.Navigate().GoToUrl(FreebitcoinHomePage);
         }
 
         public static bool NeedLogin()
         {
+            Driver!.Navigate().GoToUrl(FreebitcoinHomePage);
+
             try
             {
                 Driver!.FindElement(By.CssSelector("#balance"));
@@ -59,35 +58,47 @@ namespace FreebitcoinClaimer.Utility
 
             errorMessage = string.Empty;
 
-            if (!Driver!.Url.Contains("signup"))
-                Driver!.Navigate().GoToUrl(FreebitcoinHomePage);
+            Driver!.Navigate().GoToUrl(FreebitcoinHomePage);
 
-            IWebElement usernameInput = Driver.FindElement(By.CssSelector("#login_form_btc_address"));
-            IWebElement passwordInput = Driver.FindElement(By.CssSelector("#login_form_password"));
-            IWebElement faInput = Driver.FindElement(By.CssSelector("#login_form_2fa"));
-
-            if (!usernameInput.Displayed)
-                Driver.FindElement(By.CssSelector("li.login_menu_button > a")).Click();
-
-            usernameInput.Clear();
-            usernameInput.SendKeys(username);
-
-            passwordInput.Clear();
-            passwordInput.SendKeys(password);
-
-            faInput.Clear();
-            faInput.SendKeys(fa);
-
-            Driver.FindElement(By.CssSelector("#login_button")).Click();
-
-            Thread.Sleep(2000);
+            IWebElement usernameElement;
+            IWebElement passwordElement;
+            IWebElement faElement;
 
             try
             {
-                Driver.FindElement(By.CssSelector("#balance"));
-                return true;
+                usernameElement = Driver.FindElement(By.CssSelector("#login_form_btc_address"));
+                passwordElement = Driver.FindElement(By.CssSelector("#login_form_password"));
+                faElement = Driver.FindElement(By.CssSelector("#login_form_2fa"));
             }
             catch (NoSuchElementException)
+            {
+                throw new Exception("Enable to get login elements");
+            }
+
+            if (!usernameElement.Displayed)
+                Driver.FindElement(By.CssSelector("li.login_menu_button > a")).Click();
+
+            usernameElement.Clear();
+            passwordElement.Clear();
+            faElement.Clear();
+
+            usernameElement.SendKeys(username);
+            passwordElement.SendKeys(password);
+            faElement.SendKeys(fa);
+
+            Driver!.FindElement(By.Id("login_button")).Click();
+
+            Thread.Sleep(2000);
+
+            var wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(5));
+            wait.IgnoreExceptionTypes(typeof(NoSuchElementException));
+
+            try
+            {
+                wait.Until(drv => drv.FindElement(By.Id("balance")).Displayed);
+                return true;
+            }
+            catch (WebDriverTimeoutException)
             {
                 errorMessage = Driver.FindElement(By.CssSelector("#reward_point_redeem_result_container_div span.reward_point_redeem_result")).Text;
                 return false;
@@ -96,74 +107,113 @@ namespace FreebitcoinClaimer.Utility
 
         public static double GetBalance()
         {
-            return double.Parse(Driver!.FindElement(By.CssSelector("#balance")).Text, CultureInfo.InvariantCulture);
-        }
-
-        public static string GetResult()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static int GetCountdownMinutes()
-        {
-            string minutesRemainingText;
+            IWebElement balanceElement;
 
             try
             {
-                IWebElement countdownElement = Driver!.FindElement(By.CssSelector("#time_remaining > span.countdown_row.countdown_show2 > span.countdown_section:first-child > span.countdown_amount"));
-                minutesRemainingText = countdownElement.Text;
-            }
-            catch (NoSuchElementException)
-            {
-                minutesRemainingText = "";
-            }
-
-            if (!int.TryParse(minutesRemainingText, out int result))
-                return 0;
-
-            return result;
-        }
-
-        public static List<string> GetHistory()
-        {
-            var output = new List<string>();
-            try
-            {
-                var rowsElements = Driver!.FindElements(By.CssSelector("#bet_history_table_rows .multiply_bet_history_table_row"));
-
-                if (rowsElements.Count == 0)
-                {
-                    Driver.FindElement(By.CssSelector(".top-bar-section a.double_your_btc_link")).Click();
-                    rowsElements = Driver!.FindElements(By.CssSelector("#bet_history_table_rows .multiply_bet_history_table_row"));
-                }
-
-                foreach (var row in rowsElements)
-                {
-                    var resultDiv = row.FindElement(By.CssSelector("div:first-child"));
-
-                    var time = resultDiv.FindElement(By.CssSelector("div:nth-child(1)")).Text;
-                    var roll = resultDiv.FindElement(By.CssSelector("div:nth-child(4)")).Text;
-                    var profit = resultDiv.FindElement(By.CssSelector("div:nth-child(7) font")).Text;
-
-                    output.Add($"{time}|{roll}|{profit}");
-                }
+                balanceElement = Driver!.FindElement(By.Id("balance"));
             }
             catch (NoSuchElementException)
             {
                 throw;
             }
 
-            return output;
+            if (!double.TryParse(balanceElement.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double balance))
+                throw new Exception("Enable to parse balance value.");
+
+            return balance;
+        }
+
+        public static TimeSpan GetCountdown()
+        {
+            string countdownMinutesElementText;
+            string countdownSecondsElementText;
+
+            try
+            {
+                countdownMinutesElementText = Driver!.FindElement(By.CssSelector("#time_remaining > span.countdown_row > span.countdown_section:nth-child(1) > span.countdown_amount")).Text;
+                countdownSecondsElementText = Driver!.FindElement(By.CssSelector("#time_remaining > span.countdown_row > span.countdown_section:nth-child(2) > span.countdown_amount")).Text;
+            }
+            catch (NoSuchElementException)
+            {
+                throw new Exception("Enable to get countdown.");
+            }
+
+            if (!int.TryParse(countdownMinutesElementText, out int minutes))
+                minutes = 0;
+
+            if (!int.TryParse(countdownSecondsElementText, out int seconds))
+                seconds = 0;
+
+            TimeSpan countdown = TimeSpan.FromMinutes(minutes) + TimeSpan.FromSeconds(seconds);
+
+            return countdown;
         }
 
         public static void Claim()
         {
-            Driver!.Navigate().Refresh();
+            Driver!.Navigate().GoToUrl(FreebitcoinHomePage);
 
-            IWebElement rollButton = Driver.FindElement(By.CssSelector("#free_play_form_button"));
+            IWebElement rollElement;
 
-            if (rollButton.Displayed)
-                rollButton.SendKeys(" "); // TODO: Change this. Click does not interact with the element. STUPID!
+            try
+            {
+                rollElement = Driver!.FindElement(By.Id("free_play_form_button"));
+            }
+            catch (NoSuchElementException)
+            {
+                throw new Exception("Enable to claim Free Play. Button not found");
+            }
+
+            if (rollElement.Displayed)
+                rollElement.SendKeys(" "); // TODO: Change this. Click does not interact with the element. STUPID!
+        }
+
+        public static string GetResult()
+        {
+            IWebElement resultElement;
+
+            try
+            {
+                resultElement = Driver!.FindElement(By.Id("free_play_result"));
+            }
+            catch (NoSuchElementException)
+            {
+                throw new Exception("Enable to get Free Play results");
+            }
+
+            string result = resultElement.Text;
+
+            return result;
+        }
+
+        public static int GetFreePlayDigits()
+        {
+            IWebElement fistDigitElement;
+            IWebElement secondDigitElement;
+            IWebElement thirdDigitElement;
+            IWebElement fouthDigitElement;
+            IWebElement fifthDigitElement;
+
+            try
+            {
+                fistDigitElement = Driver!.FindElement(By.Id("free_play_first_digit"));
+                secondDigitElement = Driver!.FindElement(By.Id("free_play_second_digit"));
+                thirdDigitElement = Driver!.FindElement(By.Id("free_play_third_digit"));
+                fouthDigitElement = Driver!.FindElement(By.Id("free_play_fourth_digit"));
+                fifthDigitElement = Driver!.FindElement(By.Id("free_play_fifth_digit"));
+            }
+            catch (NoSuchElementException)
+            {
+                throw new Exception("Enable to get Free Play Digits");
+            }
+
+            string digitsStr = fistDigitElement.Text + secondDigitElement.Text + thirdDigitElement.Text + fouthDigitElement.Text + fifthDigitElement.Text;
+
+            if (!int.TryParse(digitsStr, out int digits))
+                digits = 0;
+
+            return digits;
         }
 
         public static void Quit()
