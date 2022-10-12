@@ -25,9 +25,8 @@ namespace FreebitcoinClaimer.Utility
             };
 
             options.AddArguments(
-                "user-data-dir=" + Folders.ChromeProfile,
+                "user-data-dir=" + (Logger.Level == LogLevel.Debug ? Folders.ChromeProfileDebug : Folders.ChromeProfile),
                 "--start-maximized",
-                "--window-size=1920,1080",
                 "--disable-notifications"
                 );
 
@@ -72,7 +71,7 @@ namespace FreebitcoinClaimer.Utility
             }
             catch (NoSuchElementException)
             {
-                throw new Exception("Enable to get login elements");
+                throw new Exception("Unable to get login elements.");
             }
 
             if (!usernameElement.Displayed)
@@ -115,19 +114,19 @@ namespace FreebitcoinClaimer.Utility
             }
             catch (NoSuchElementException)
             {
-                throw;
+                throw new Exception("Unable to get balance element.");
             }
 
             if (!double.TryParse(balanceElement.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double balance))
-                throw new Exception("Enable to parse balance value.");
+                throw new Exception("Failed to parse balance value.");
 
             return balance;
         }
 
         public static TimeSpan GetCountdown()
         {
-            string countdownMinutesElementText;
-            string countdownSecondsElementText;
+            string countdownMinutesElementText = string.Empty;
+            string countdownSecondsElementText = string.Empty;
 
             try
             {
@@ -136,7 +135,7 @@ namespace FreebitcoinClaimer.Utility
             }
             catch (NoSuchElementException)
             {
-                throw new Exception("Enable to get countdown.");
+                Logger.Warn("Unable to get countdown element.");
             }
 
             if (!int.TryParse(countdownMinutesElementText, out int minutes))
@@ -154,46 +153,55 @@ namespace FreebitcoinClaimer.Utility
         {
             Driver!.Navigate().GoToUrl(FreebitcoinHomePage);
 
-            IWebElement rollElement;
+            IWebElement? rollElement = null;
 
             try
             {
                 rollElement = Driver!.FindElement(By.Id("free_play_form_button"));
             }
-            catch (NoSuchElementException)
+            catch (NoSuchElementException ex)
             {
-                throw new Exception("Enable to claim Free Play. Button not found");
+                Logger.PrintException("Unable to find free play button.", ex);
             }
 
-            if (rollElement.Displayed)
+            if (rollElement!.Displayed)
                 rollElement.SendKeys(" "); // TODO: Change this. Click does not interact with the element. STUPID!
+
+            WebDriverWait wait = new(Driver, TimeSpan.FromSeconds(10));
+            wait.IgnoreExceptionTypes(typeof(NoSuchElementException));
+
+            wait.Until(
+                drv => drv.FindElement(By.Id("free_play_first_digit")));
         }
 
         public static string GetResult()
         {
-            IWebElement resultElement;
+            IWebElement? resultElement = null;
 
             try
             {
                 resultElement = Driver!.FindElement(By.Id("free_play_result"));
             }
-            catch (NoSuchElementException)
+            catch (NoSuchElementException ex)
             {
-                throw new Exception("Enable to get Free Play results");
+                Logger.PrintException("Unable to get free play results.", ex);
             }
 
-            string result = resultElement.Text;
+            string result = string.Empty;
+
+            if (resultElement is not null)
+                result = resultElement.Text;
 
             return result;
         }
 
         public static int GetFreePlayDigits()
         {
-            IWebElement fistDigitElement;
-            IWebElement secondDigitElement;
-            IWebElement thirdDigitElement;
-            IWebElement fouthDigitElement;
-            IWebElement fifthDigitElement;
+            IWebElement? fistDigitElement = null;
+            IWebElement? secondDigitElement = null;
+            IWebElement? thirdDigitElement = null;
+            IWebElement? fouthDigitElement = null;
+            IWebElement? fifthDigitElement = null;
 
             try
             {
@@ -202,13 +210,17 @@ namespace FreebitcoinClaimer.Utility
                 thirdDigitElement = Driver!.FindElement(By.Id("free_play_third_digit"));
                 fouthDigitElement = Driver!.FindElement(By.Id("free_play_fourth_digit"));
                 fifthDigitElement = Driver!.FindElement(By.Id("free_play_fifth_digit"));
+
             }
-            catch (NoSuchElementException)
+            catch (NoSuchElementException ex)
             {
-                throw new Exception("Enable to get Free Play Digits");
+                Logger.PrintException("Unable to get free play digts.", ex);
             }
 
-            string digitsStr = fistDigitElement.Text + secondDigitElement.Text + thirdDigitElement.Text + fouthDigitElement.Text + fifthDigitElement.Text;
+            string digitsStr = string.Empty;
+
+            if (fistDigitElement is not null)
+                digitsStr = fistDigitElement.Text + secondDigitElement!.Text + thirdDigitElement!.Text + fouthDigitElement!.Text + fifthDigitElement!.Text;
 
             if (!int.TryParse(digitsStr, out int digits))
                 digits = 0;

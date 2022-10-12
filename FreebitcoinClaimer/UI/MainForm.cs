@@ -6,7 +6,7 @@ namespace FreebitcoinClaimer.UI
 {
     public partial class MainForm : Form
     {
-        private System.Windows.Forms.Timer ClaimTimer = new System.Windows.Forms.Timer();
+        private readonly System.Windows.Forms.Timer ClaimTimer = new();
 
         private readonly int DefaultClaimInterval = 3600000;
 
@@ -26,8 +26,8 @@ namespace FreebitcoinClaimer.UI
 
             InitialBalance = initialBalance;
             CurrentBalance = initialBalance;
-            this.initialBalanceValueLabel.Text = InitialBalance.ToString(CultureInfo.InvariantCulture);
-            this.currentBalanceValueLabel.Text = CurrentBalance.ToString(CultureInfo.InvariantCulture);
+            this.initialBalanceValueLabel.Text = InitialBalance.ToString("0.00000000", CultureInfo.InvariantCulture);
+            this.currentBalanceValueLabel.Text = CurrentBalance.ToString("0.00000000", CultureInfo.InvariantCulture);
         }
 
         private void ActionButton_Click(object sender, EventArgs e)
@@ -71,7 +71,7 @@ namespace FreebitcoinClaimer.UI
 
             resultGridView.Rows.Add(DateTime.Now.ToShortTimeString(), digits.ToString("D5"), profit);
 
-            currentBalanceValueLabel.Text = CurrentBalance.ToString(CultureInfo.InvariantCulture);
+            currentBalanceValueLabel.Text = CurrentBalance.ToString("0.00000000", CultureInfo.InvariantCulture);
 
             if (InitialBalance == CurrentBalance)
                 currentBalanceValueLabel.ForeColor = Color.Black;

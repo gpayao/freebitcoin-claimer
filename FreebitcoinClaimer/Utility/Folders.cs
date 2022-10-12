@@ -8,6 +8,7 @@
 
         internal static readonly string Chrome = Path.Combine(Data, "Chrome");
         internal static readonly string ChromeProfile = Path.Combine(Chrome, "Profile");
+        internal static readonly string ChromeProfileDebug = Path.Combine(Chrome, "Profile-Debug");
         internal static readonly string ChromeDriver = Path.Combine(Chrome, "Driver");
     }
 }
