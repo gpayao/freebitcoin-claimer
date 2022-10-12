@@ -26,7 +26,7 @@ namespace FreebitcoinClaimer.Utility
 
             options.AddArguments(
                 "user-data-dir=" + (Logger.Level == LogLevel.Debug ? Folders.ChromeProfileDebug : Folders.ChromeProfile),
-                "--start-maximized",
+                "--window-size=1920,1080",
                 "--disable-notifications"
                 );
 
