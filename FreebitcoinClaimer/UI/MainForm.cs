@@ -45,7 +45,7 @@ namespace FreebitcoinClaimer.UI
             {
                 var initialBalance = FreebitcoinControl.GetBalance();
                 InitialBalance = initialBalance;
-                this.initialBalanceValueLabel.Text = InitialBalance.ToString(CultureInfo.InvariantCulture);
+                this.initialBalanceValueLabel.Text = InitialBalance.ToString("0.00000000", CultureInfo.InvariantCulture);
 
                 SetClaimTimerInterval();
                 ClaimTimer.Start();

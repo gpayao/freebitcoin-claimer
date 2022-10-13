@@ -25,7 +25,7 @@ namespace FreebitcoinClaimer.Utility
             };
 
             options.AddArguments(
-                "user-data-dir=" + (Logger.Level == LogLevel.Debug ? Folders.ChromeProfileDebug : Folders.ChromeProfile),
+                "user-data-dir=" + Folders.ChromeProfile,
                 "--window-size=1920,1080",
                 "--disable-notifications"
                 );
@@ -167,11 +167,16 @@ namespace FreebitcoinClaimer.Utility
             if (rollElement!.Displayed)
                 rollElement.SendKeys(" "); // TODO: Change this. Click does not interact with the element. STUPID!
 
-            WebDriverWait wait = new(Driver, TimeSpan.FromSeconds(10));
-            wait.IgnoreExceptionTypes(typeof(NoSuchElementException));
-
-            wait.Until(
-                drv => drv.FindElement(By.Id("free_play_first_digit")));
+            try
+            {
+                new WebDriverWait(Driver, TimeSpan.FromSeconds(5))
+                    .Until(
+                        drv => drv.FindElement(By.Id("free_play_digits")).Displayed);
+            }
+            catch (Exception ex)
+            {
+                Logger.PrintException("Something went wrong while claiming the reward.", ex)
+            }
         }
 
         public static string GetResult()
@@ -180,14 +185,22 @@ namespace FreebitcoinClaimer.Utility
 
             try
             {
-                resultElement = Driver!.FindElement(By.Id("free_play_result"));
+                new WebDriverWait(Driver, TimeSpan.FromSeconds(3))
+                    .Until(
+                        drv => drv.FindElement(By.Id("free_play_result")).Displayed);
+
+                resultElement = Driver!.FindElement(By.CssSelector("#free_play_result"));
+            }
+            catch (WebDriverTimeoutException ex)
+            {
+                Logger.PrintException("Unable to get free play results.", ex);
             }
             catch (NoSuchElementException ex)
             {
                 Logger.PrintException("Unable to get free play results.", ex);
             }
 
-            string result = string.Empty;
+            string result = "You win 0.00000000 BTC, 2 lottery tickets, 2 reward points!";
 
             if (resultElement is not null)
                 result = resultElement.Text;
