@@ -11,6 +11,8 @@ namespace FreebitcoinClaimer.Utility
 
         private static IWebDriver? Driver;
 
+        private static IJavaScriptExecutor? JavaScriptExecutor;
+
         internal static void Setup()
         {
             Logger.Info("Starting Chrome Driver");
@@ -34,6 +36,20 @@ namespace FreebitcoinClaimer.Utility
                 options.AddArgument("headless");
 
             Driver = new ChromeDriver(chromeService, options);
+            JavaScriptExecutor = (IJavaScriptExecutor)Driver;
+        }
+
+        public static void FakeReward()
+        {
+            JavaScriptExecutor!.ExecuteScript(
+                "document.getElementById('free_play_digits').style.display = 'block';" +
+                "document.getElementById('free_play_first_digit').innerHTML = '1';" +
+                "document.getElementById('free_play_second_digit').innerHTML = '2';" +
+                "document.getElementById('free_play_third_digit').innerHTML = '3';" +
+                "document.getElementById('free_play_fourth_digit').innerHTML = '4';" +
+                "document.getElementById('free_play_fifth_digit').innerHTML = '5';" +
+                "document.getElementById('free_play_result').style.display = 'block';" +
+                "document.getElementById('winnings').innerHTML = '0.00000099';");
         }
 
         public static bool NeedLogin()
@@ -149,7 +165,7 @@ namespace FreebitcoinClaimer.Utility
             return countdown;
         }
 
-        public static void Claim()
+        public static void PlayFreeRoll()
         {
             Driver!.Navigate().GoToUrl(FreebitcoinHomePage);
 
@@ -175,11 +191,12 @@ namespace FreebitcoinClaimer.Utility
             }
             catch (Exception ex)
             {
-                Logger.PrintException("Something went wrong while claiming the reward.", ex)
+                Logger.PrintException("Something went wrong while claiming the reward.", ex);
+                throw;
             }
         }
 
-        public static string GetResult()
+        public static string GetFreeRollResult()
         {
             IWebElement? resultElement = null;
 
@@ -208,7 +225,26 @@ namespace FreebitcoinClaimer.Utility
             return result;
         }
 
-        public static int GetFreePlayDigits()
+        public static double GetFreeRollWinnings()
+        {
+            IWebElement? winningsElement = null;
+
+            try
+            {
+                winningsElement = Driver!.FindElement(By.Id("winnings"));
+            }
+            catch (NoSuchElementException ex)
+            {
+                Logger.PrintException("Unable to get free roll winnings", ex);
+            }
+
+            if (!double.TryParse(winningsElement?.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double winnings))
+                throw new Exception("Failed to parse winnings value.");
+
+            return winnings;
+        }
+
+        public static int GetFreeRollDigits()
         {
             IWebElement? fistDigitElement = null;
             IWebElement? secondDigitElement = null;

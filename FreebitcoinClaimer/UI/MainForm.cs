@@ -26,8 +26,8 @@ namespace FreebitcoinClaimer.UI
 
             InitialBalance = initialBalance;
             CurrentBalance = initialBalance;
-            this.initialBalanceValueLabel.Text = InitialBalance.ToString("0.00000000", CultureInfo.InvariantCulture);
-            this.currentBalanceValueLabel.Text = CurrentBalance.ToString("0.00000000", CultureInfo.InvariantCulture);
+
+            UpdateView();
         }
 
         private void ActionButton_Click(object sender, EventArgs e)
@@ -43,48 +43,58 @@ namespace FreebitcoinClaimer.UI
             }
             else
             {
-                var initialBalance = FreebitcoinControl.GetBalance();
-                InitialBalance = initialBalance;
-                this.initialBalanceValueLabel.Text = InitialBalance.ToString("0.00000000", CultureInfo.InvariantCulture);
+                InitialBalance = FreebitcoinControl.GetBalance();
 
                 SetClaimTimerInterval();
+
                 ClaimTimer.Start();
             }
 
-            actionButton.Text = ClaimTimer.Enabled ? "Stop" : "Start";
-            actionMenuItem.Text = ClaimTimer.Enabled ? "Stop" : "Start";
+            UpdateView();
 
             ShowNotification("Auto Claimer: " + (ClaimTimer.Enabled ? "Started" : "Stopped"));
         }
 
         private void Claim_Tick(object? sender, EventArgs e)
         {
-            FreebitcoinControl.Claim();
+            bool tryAgain = true;
+            int attempt = 0;
+            while (tryAgain)
+            {
+                try
+                {
+                    FreebitcoinControl.PlayFreeRoll();
+                    tryAgain = false;
+                }
+                catch (Exception ex)
+                {
+                    attempt++;
 
-            SetClaimTimerInterval();
+                    if (attempt == 3)
+                    {
+                        ClaimTimer.Stop();
+                        MessageBox.Show(ex.Message, "Freebitcoin Claimer", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+                }
+            }
 
             CurrentBalance = FreebitcoinControl.GetBalance();
+            int digits = FreebitcoinControl.GetFreeRollDigits();
+            string result = FreebitcoinControl.GetFreeRollResult();
+            double profit = FreebitcoinControl.GetFreeRollWinnings();
 
-            int digits = FreebitcoinControl.GetFreePlayDigits();
-            string result = FreebitcoinControl.GetResult();
-            string profit = result.Substring(9, 10);
+            resultGridView.Rows.Add(DateTime.Now.ToShortTimeString(), digits.ToString("D5"), profit.ToString("0.00000000", CultureInfo.InvariantCulture));
 
-            resultGridView.Rows.Add(DateTime.Now.ToShortTimeString(), digits.ToString("D5"), profit);
-
-            currentBalanceValueLabel.Text = CurrentBalance.ToString("0.00000000", CultureInfo.InvariantCulture);
-
-            if (InitialBalance == CurrentBalance)
-                currentBalanceValueLabel.ForeColor = Color.Black;
-            else if (InitialBalance > CurrentBalance)
-                currentBalanceValueLabel.ForeColor = Color.Red;
-            else
-                currentBalanceValueLabel.ForeColor = Color.DarkGreen;
+            UpdateView();
 
             var sb = new StringBuilder();
             sb.AppendLine($"Rolled {digits.ToString("D5")}");
             sb.AppendLine(result);
 
             ShowNotification(sb.ToString());
+
+            SetClaimTimerInterval();
         }
 
         private void SetClaimTimerInterval()
@@ -104,6 +114,21 @@ namespace FreebitcoinClaimer.UI
             ClaimTimer.Interval = Convert.ToInt32(countdown.TotalMilliseconds) + configurationDelay;
         }
 
+        private void UpdateView()
+        {
+            actionButton.Text = ClaimTimer.Enabled ? "Stop" : "Start";
+            actionMenuItem.Text = ClaimTimer.Enabled ? "Stop" : "Start";
+
+            this.initialBalanceValueLabel.Text = InitialBalance.ToString(CultureInfo.InvariantCulture);
+            this.currentBalanceValueLabel.Text = CurrentBalance.ToString(CultureInfo.InvariantCulture);
+
+            if (InitialBalance >= CurrentBalance)
+                currentBalanceValueLabel.ForeColor = Color.Black;
+            else
+                currentBalanceValueLabel.ForeColor = Color.DarkGreen;
+        }
+
+        #region Form Default Behavior
         private void ShowForm()
         {
             this.Show();
@@ -138,5 +163,6 @@ namespace FreebitcoinClaimer.UI
             if (e is MouseEventArgs args && args.Button == MouseButtons.Left)
                 ShowForm();
         }
+        #endregion
     }
 }
