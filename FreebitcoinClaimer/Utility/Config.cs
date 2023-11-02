@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Serilog;
 using System.Globalization;
 
 namespace FreebitcoinClaimer.Utility
@@ -15,7 +16,7 @@ namespace FreebitcoinClaimer.Utility
             if (!Directory.Exists(Folders.Configuration))
                 Directory.CreateDirectory(Folders.Configuration);
 
-            Logger.Info($"Loading settings from \"{SettingsFile}\"");
+            Log.Information($"Loading settings from \"{SettingsFile}\"");
 
             // Check if settings exist
             if (File.Exists(SettingsFile))
@@ -27,18 +28,18 @@ namespace FreebitcoinClaimer.Utility
                 }
                 catch (JsonSerializationException ex)
                 {
-                    Logger.PrintException("Syntax error occured while reading settings JSON", ex);
+                    Log.Error("Syntax error occured while reading settings JSON", ex);
                     MessageBox.Show($"Failed to load settings from \"{SettingsFile}\". Please check your syntax and try again.", "FreeBitcoin Claimer", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 catch (Exception ex)
                 {
-                    Logger.PrintException("Failed to read settings JSON", ex);
+                    Log.Error("Failed to read settings JSON", ex);
                     MessageBox.Show($"Failed to load settings from \"{SettingsFile}\".", "FreeBitcoin Claimer", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             else
             {
-                Logger.Info("Settings file does not exist. Loading default");
+                Log.Information("Settings file does not exist. Loading default");
                 LoadDefault();
                 Save();
             }
@@ -60,7 +61,7 @@ namespace FreebitcoinClaimer.Utility
 
         internal static void Save()
         {
-            Logger.Info($"Saving settings to \"{SettingsFile}\"");
+            Log.Information($"Saving settings to \"{SettingsFile}\"");
 
             try
             {
@@ -68,7 +69,7 @@ namespace FreebitcoinClaimer.Utility
             }
             catch (Exception ex)
             {
-                Logger.PrintException("Failed to write settings JSON", ex);
+                Log.Error("Failed to write settings JSON", ex);
             }
         }
 
@@ -93,7 +94,7 @@ namespace FreebitcoinClaimer.Utility
 
             if (!byte.TryParse(strValue, out byte value))
             {
-                Logger.Warn("Failed to parse \"{0}\" as byte", strValue);
+                Log.Warning("Failed to parse \"{0}\" as byte", strValue);
                 return defaultValue;
             }
 
@@ -111,7 +112,7 @@ namespace FreebitcoinClaimer.Utility
 
             if (!int.TryParse(strValue, out int value))
             {
-                Logger.Warn("Failed to parse \"{0}\" as integer", strValue);
+                Log.Warning("Failed to parse \"{0}\" as integer", strValue);
                 return defaultValue;
             }
 
@@ -129,7 +130,7 @@ namespace FreebitcoinClaimer.Utility
 
             if (!float.TryParse(strValue, NumberStyles.Float, CultureInfo.InvariantCulture, out float value))
             {
-                Logger.Warn("Failed to parse \"{0}\" as float", strValue);
+                Log.Warning("Failed to parse \"{0}\" as float", strValue);
                 return defaultValue;
             }
 
@@ -147,7 +148,7 @@ namespace FreebitcoinClaimer.Utility
 
             if (!bool.TryParse(strValue, out bool value))
             {
-                Logger.Warn("Failed to parse \"{0}\" as boolean", strValue);
+                Log.Warning("Failed to parse \"{0}\" as boolean", strValue);
                 return defaultValue;
             }
 
@@ -162,7 +163,7 @@ namespace FreebitcoinClaimer.Utility
 
         private static JToken GetTokenByPath(string key)
         {
-            Logger.Trace($"Getting key \"{key}\"");
+            Log.Verbose($"Getting key \"{key}\"");
 
             string[] parts = key.Split('.');
             JToken currentToken = root!;
@@ -176,14 +177,14 @@ namespace FreebitcoinClaimer.Utility
             }
 
             if (currentToken == null)
-                Logger.Trace("Failed to find node with key " + key);
+                Log.Verbose("Failed to find node with key " + key);
 
             return currentToken!.Parent!;
         }
 
         private static void SetTokenByPath(string key, object value)
         {
-            Logger.Trace($"Setting key \"{key}\" to \"{value}\"");
+            Log.Verbose($"Setting key \"{key}\" to \"{value}\"");
 
             string[] parts = key.Split('.');
             JToken currentToken = root!;
@@ -192,7 +193,7 @@ namespace FreebitcoinClaimer.Utility
             {
                 if (currentToken is not JObject)
                 {
-                    Logger.Error("{0} is not a JObject", string.Join(".", parts.Take(i + 1)));
+                    Log.Error("{0} is not a JObject", string.Join(".", parts.Take(i + 1)));
                     return;
                 }
 

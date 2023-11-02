@@ -3,6 +3,8 @@ using WebDriverManager.Helpers;
 using WebDriverManager;
 using FreebitcoinClaimer.UI;
 using FreebitcoinClaimer.Types;
+using Serilog;
+using System.Configuration;
 
 namespace FreebitcoinClaimer
 {
@@ -19,7 +21,7 @@ namespace FreebitcoinClaimer
         {
             LoadSettings();
 
-            Logger.Info($"Started {APP_Name} v{VERSION}");
+            Log.Information($"Started {APP_Name} v{VERSION}");
 
             ShowSystemInfo();
 
@@ -36,30 +38,29 @@ namespace FreebitcoinClaimer
         }
         private static void ShowSystemInfo()
         {
-            Logger.Info($"OS Version: " + Util.GetFriendlyOSVersion());
+            Log.Information($"OS Version: " + Util.GetFriendlyOSVersion());
         }
 
         private static void LoadSettings()
         {
-            Logger.Debug("Loading settings");
+            LoggerManager.Setup();
 
-            Logger.Setup();
+            Log.Debug("Loading settings");
 
             Config.Load();
 
-            Logger.WriteToFile = Config.GetBooleanValue("LogToFile", true);
-            Logger.SetLogLevel(Config.GetStringValue("LogLevel", "info"));
+            LoggerManager.SetLogLevel(Config.GetStringValue("LogLevel", "information"));
 
             LoadBrowser();
         }
 
         private static void LoadBrowser()
         {
-            Logger.Info("Loading browser driver");
+            Log.Information("Loading browser driver");
 
             new DriverManager()
                 .SetUpDriver(
-                    config: new FreebitcoinClaimerBrowserConfig(), 
+                    config: new FreebitcoinClaimerBrowserConfig(),
                     version: VersionResolveStrategy.MatchingBrowser
                     );
 
@@ -68,9 +69,9 @@ namespace FreebitcoinClaimer
 
         internal static void Shutdown()
         {
-            Logger.Info("Shutting Down");
+            Log.Information("Shutting Down");
 
-            Logger.CleanFiles();
+            Log.CloseAndFlush();
 
             FreebitcoinControl.Quit();
 

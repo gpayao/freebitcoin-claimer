@@ -1,6 +1,7 @@
 ﻿using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
+using Serilog;
 using System.Globalization;
 
 namespace FreebitcoinClaimer.Utility
@@ -15,7 +16,7 @@ namespace FreebitcoinClaimer.Utility
 
         internal static void Setup()
         {
-            Logger.Info("Starting Chrome Driver");
+            Log.Information("Starting Chrome Driver");
 
             var chromeService = ChromeDriverService.CreateDefaultService();
             chromeService.HideCommandPromptWindow = true;
@@ -32,7 +33,7 @@ namespace FreebitcoinClaimer.Utility
                 "--disable-notifications"
                 );
 
-            if (Logger.Level != LogLevel.Debug)
+            if (LoggerManager.LevelSwitch.MinimumLevel != Serilog.Events.LogEventLevel.Debug)
                 options.AddArgument("headless");
 
             Driver = new ChromeDriver(chromeService, options);
@@ -69,7 +70,7 @@ namespace FreebitcoinClaimer.Utility
 
         public static bool Login(string username, string password, string fa, out string errorMessage)
         {
-            Logger.Info("Logging in");
+            Log.Information("Logging in");
 
             errorMessage = string.Empty;
 
@@ -151,7 +152,7 @@ namespace FreebitcoinClaimer.Utility
             }
             catch (NoSuchElementException)
             {
-                Logger.Warn("Unable to get countdown element.");
+                Log.Warning("Unable to get countdown element.");
             }
 
             if (!int.TryParse(countdownMinutesElementText, out int minutes))
@@ -177,7 +178,7 @@ namespace FreebitcoinClaimer.Utility
             }
             catch (NoSuchElementException ex)
             {
-                Logger.PrintException("Unable to find free play button.", ex);
+                Log.Error("Unable to find free play button.", ex);
             }
 
             if (rollElement!.Displayed)
@@ -191,7 +192,7 @@ namespace FreebitcoinClaimer.Utility
             }
             catch (Exception ex)
             {
-                Logger.PrintException("Something went wrong while claiming the reward.", ex);
+                Log.Error("Something went wrong while claiming the reward.", ex);
                 throw;
             }
         }
@@ -210,11 +211,11 @@ namespace FreebitcoinClaimer.Utility
             }
             catch (WebDriverTimeoutException ex)
             {
-                Logger.PrintException("Unable to get free play results.", ex);
+                Log.Error("Unable to get free play results.", ex);
             }
             catch (NoSuchElementException ex)
             {
-                Logger.PrintException("Unable to get free play results.", ex);
+                Log.Error("Unable to get free play results.", ex);
             }
 
             string result = "You win 0.00000000 BTC, 2 lottery tickets, 2 reward points!";
@@ -235,7 +236,7 @@ namespace FreebitcoinClaimer.Utility
             }
             catch (NoSuchElementException ex)
             {
-                Logger.PrintException("Unable to get free roll winnings", ex);
+                Log.Error("Unable to get free roll winnings", ex);
             }
 
             if (!double.TryParse(winningsElement?.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out double winnings))
@@ -263,7 +264,7 @@ namespace FreebitcoinClaimer.Utility
             }
             catch (NoSuchElementException ex)
             {
-                Logger.PrintException("Unable to get free play digts.", ex);
+                Log.Error("Unable to get free play digts.", ex);
             }
 
             string digitsStr = string.Empty;

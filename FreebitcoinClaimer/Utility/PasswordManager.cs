@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using Serilog;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace FreebitcoinClaimer.Utility
@@ -28,7 +29,7 @@ namespace FreebitcoinClaimer.Utility
 
         public static void Save(string password)
         {
-            Logger.Info("Encrypting & saving password to file");
+            Log.Information("Encrypting & saving password to file");
 
             try
             {
@@ -42,7 +43,7 @@ namespace FreebitcoinClaimer.Utility
             {
                 MessageBox.Show("Something went wrong when trying to save your password:" + Environment.NewLine + Environment.NewLine + ex.StackTrace, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
-                Logger.PrintException("Could not save password to file", ex);
+                Log.Error("Could not save password to file", ex);
 
                 return;
             }
