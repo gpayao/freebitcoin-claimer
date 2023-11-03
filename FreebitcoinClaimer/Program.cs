@@ -1,16 +1,13 @@
 using FreebitcoinClaimer.Utility;
-using WebDriverManager.Helpers;
-using WebDriverManager;
 using FreebitcoinClaimer.UI;
-using FreebitcoinClaimer.Types;
 using Serilog;
-using System.Configuration;
+using FreebitcoinClaimer.Services;
 
 namespace FreebitcoinClaimer
 {
     internal static class Program
     {
-        public static string APP_Name = "FreeBitcoin Claimer";
+        public static string APP_Name = "FreeBitco.in Claimer";
         public static string VERSION = "1.0.0";
 
         /// <summary>
@@ -21,18 +18,16 @@ namespace FreebitcoinClaimer
         {
             LoadSettings();
 
-            Log.Information($"Started {APP_Name} v{VERSION}");
-
             ShowSystemInfo();
 
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
+            Log.Information($"Started {APP_Name} v{VERSION}");
+
             ApplicationConfiguration.Initialize();
 
-            if (!FreebitcoinControl.NeedLogin())
-                Application.Run(new LoginForm());
+            Application.Run(new LoginForm());
 
-            Application.Run(new MainForm());
+
+            //Application.Run(new MainForm());
 
             Shutdown();
         }
@@ -49,7 +44,7 @@ namespace FreebitcoinClaimer
 
             Config.Load();
 
-            LoggerManager.SetLogLevel(Config.GetStringValue("LogLevel", "information"));
+            LoggerManager.SetLogLevel(Config.GetStringValue("LogLevel", "Information"));
 
             LoadBrowser();
         }
@@ -58,13 +53,7 @@ namespace FreebitcoinClaimer
         {
             Log.Information("Loading browser driver");
 
-            new DriverManager()
-                .SetUpDriver(
-                    config: new FreebitcoinClaimerBrowserConfig(),
-                    version: VersionResolveStrategy.MatchingBrowser
-                    );
-
-            FreebitcoinControl.Setup();
+            FreebitcoinManager.Setup();
         }
 
         internal static void Shutdown()
@@ -72,8 +61,6 @@ namespace FreebitcoinClaimer
             Log.Information("Shutting Down");
 
             Log.CloseAndFlush();
-
-            FreebitcoinControl.Quit();
 
             Application.Exit();
         }
