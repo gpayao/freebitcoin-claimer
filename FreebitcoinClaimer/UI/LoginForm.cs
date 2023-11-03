@@ -1,113 +1,83 @@
-﻿using FreebitcoinClaimer.Utility;
+﻿using FreebitcoinClaimer.Services;
+using FreebitcoinClaimer.Services.Types;
 using System.Text.RegularExpressions;
+using Timer = System.Windows.Forms.Timer;
 
 namespace FreebitcoinClaimer.UI
 {
     public partial class LoginForm : Form
     {
-        private readonly System.Timers.Timer AttemptTimer;
-        private readonly System.Timers.Timer ClockTimer;
-        private readonly double ClockTimerInterval = 1000;
-        private double CurrentClock = 0;
+        public bool SuccessfulLogin { get; set; } = false;
 
-        private bool SuccessfulLogin = false;
+        private Timer Timer { get; set; }
+        private double currentClock = 0;
 
         public LoginForm()
         {
             InitializeComponent();
-            AttemptTimer = new System.Timers.Timer();
-            AttemptTimer.Elapsed += AttemptTimer_Elapsed;
-
-            ClockTimer = new System.Timers.Timer(ClockTimerInterval);
-            ClockTimer.Elapsed += ClockTimer_Elapsed;
-        }
-
-        delegate void ClockTimerCallback();
-        private void ClockTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e) =>
-            this.Invoke(new ClockTimerCallback(UpdateOnScreenClock));
-
-        private void UpdateOnScreenClock()
-        {
-            CurrentClock -= ClockTimerInterval;
-            clockLabel.Text = TimeSpan.FromMilliseconds(CurrentClock).ToString(@"mm\:ss");
-        }
-
-        delegate void ActivateLoginButtonCallback();
-        private void ActivateLoginButton() => 
-            SetControlState(true);
-
-        private void AttemptTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
-        {
-            StopTimers();
-
-            this.Invoke(new ActivateLoginButtonCallback(ActivateLoginButton));
+            Timer = new Timer();
         }
 
         private void LoginButton_Click(object sender, EventArgs e) => LoginFreebitcoin();
+        private void FormTextBox_Enter(object sender, EventArgs e) => LoginFreebitcoin();
 
-        private void LoginFreebitcoin()
+        private async void LoginFreebitcoin()
         {
             this.loginButton.Enabled = false;
 
             var username = this.emailAddressTextBox.Text;
             var password = this.passwordTextBox.Text;
-            var fa = this.faTextBox.Text;
+            var tfa = this.faTextBox.Text;
 
-            SuccessfulLogin = FreebitcoinControl.Login(username, password, fa, out string errorMessage);
-
-            if (!SuccessfulLogin)
+            try
             {
-                if (errorMessage.Contains("Too many tries"))
-                {
-                    var interval = int.Parse(Regex.Match(errorMessage, @"\d+").Value);
+                await FreebitcoinManager.Login(username, password, tfa);
+            }
+            catch (TooManyAttemptsException ex)
+            {
+                var timeout = int.Parse(Regex.Match(ex.Message, @"\d+").Value);
 
-                    double waitNumber = 0;
+                currentClock = TimeSpan.FromMinutes(timeout).TotalSeconds;
 
-                    if (errorMessage.Contains("minutes"))
-                        waitNumber = TimeSpan.FromMinutes(interval).TotalMilliseconds;
+                if (timeout > 5)
+                    currentClock = TimeSpan.FromSeconds(timeout).TotalSeconds;
 
-                    if (errorMessage.Contains("seconds"))
-                        waitNumber = TimeSpan.FromSeconds(interval).TotalMilliseconds;
+                Timer.Interval = 1000;
+                Timer.Start();
+                Timer.Tick += Timer_Tick;
 
-                    StartTimers(waitNumber);
-                    UpdateOnScreenClock();
-                    SetControlState(false);
-                }
-                else
-                    this.loginButton.Enabled = true;
-
-                MessageBox.Show($"{errorMessage}", "Freebitcoin Claimer", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-
+                MessageBox.Show($"{ex.Message}", "Freebitcoin Claimer", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"{ex.Message}", "Freebitcoin Claimer", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                this.loginButton.Enabled = true;
                 return;
             }
 
             this.Close();
         }
 
-        private void StartTimers(double interval)
+        private void Timer_Tick(object? sender, EventArgs e)
         {
-            CurrentClock = interval;
-            AttemptTimer.Interval = interval;
-            AttemptTimer.Start();
-            ClockTimer.Start();
-        }
+            clockLabel.Visible = true;
+            clockLabel.Text = TimeSpan.FromSeconds(currentClock).ToString(@"mm\:ss");
 
-        private void StopTimers()
-        {
-            AttemptTimer.Stop();
-            ClockTimer.Stop();
-        }
+            currentClock--;
 
-        private void SetControlState(bool state)
-        {
-            this.loginButton.Enabled = state;
-            this.clockLabel.Visible = !state;
+            if (currentClock == 0)
+            {
+                Timer.Stop();
+                clockLabel.Visible = false;
+                this.loginButton.Enabled = true;
+            }
         }
 
         private void LoginForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (!SuccessfulLogin)
-                Program.ForceShutdown();
+                Program.Shutdown();
         }
     }
 }
