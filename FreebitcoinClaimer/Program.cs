@@ -18,16 +18,20 @@ namespace FreebitcoinClaimer
         {
             LoadSettings();
 
-            ShowSystemInfo();
-
             Log.Information($"Started {APP_Name} v{VERSION}");
 
             ApplicationConfiguration.Initialize();
 
-            Application.Run(new LoginForm());
+            if (!FreebitcoinManager.HasLogin())
+            {
+                if (new LoginForm().ShowDialog() != DialogResult.OK)
+                {
+                    Shutdown();
+                    return;
+                }
+            }
 
-
-            //Application.Run(new MainForm());
+            Application.Run(new MainForm());
 
             Shutdown();
         }
@@ -40,21 +44,17 @@ namespace FreebitcoinClaimer
         {
             LoggerManager.Setup();
 
+            ShowSystemInfo();
+
             Log.Debug("Loading settings");
 
             Config.Load();
 
             LoggerManager.SetLogLevel(Config.GetStringValue("LogLevel", "Information"));
 
-            LoadBrowser();
-        }
-
-        private static void LoadBrowser()
-        {
-            Log.Information("Loading browser driver");
-
             FreebitcoinManager.Setup();
         }
+
 
         internal static void Shutdown()
         {

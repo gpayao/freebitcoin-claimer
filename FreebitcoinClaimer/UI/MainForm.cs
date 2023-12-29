@@ -1,4 +1,5 @@
-﻿using FreebitcoinClaimer.Utility;
+﻿using FreebitcoinClaimer.Services;
+using FreebitcoinClaimer.Services.Types;
 using System.Globalization;
 using System.Text;
 
@@ -10,9 +11,6 @@ namespace FreebitcoinClaimer.UI
 
         private readonly int DefaultClaimInterval = 3600000;
 
-        private double InitialBalance = 0;
-        private double CurrentBalance = 0;
-
         public MainForm()
         {
             InitializeComponent();
@@ -20,17 +18,17 @@ namespace FreebitcoinClaimer.UI
             appNameMenuItem.Text = Program.APP_Name + " " + Program.VERSION;
 
             ClaimTimer.Tick += Claim_Tick;
-            ClaimTimer.Interval = DefaultClaimInterval;
+            ClaimTimer.Interval = 10;
 
-            var initialBalance = FreebitcoinControl.GetBalance();
-
-            InitialBalance = initialBalance;
-            CurrentBalance = initialBalance;
-
-            UpdateView();
+            GetUserStats();
         }
 
-        private void ActionButton_Click(object sender, EventArgs e)
+        private void ClaimButton_Click(object sender, EventArgs e)
+        {
+            FreeRoll();
+        }
+
+        private void AutoClaimButton_Click(object sender, EventArgs e)
         {
             if (ClaimTimer.Enabled)
             {
@@ -43,90 +41,56 @@ namespace FreebitcoinClaimer.UI
             }
             else
             {
-                InitialBalance = FreebitcoinControl.GetBalance();
-
-                SetClaimTimerInterval();
-
                 ClaimTimer.Start();
             }
 
-            UpdateView();
+            autoclaimButton.Text = ClaimTimer.Enabled ? "Stop" : "Start";
+            actionMenuItem.Text = ClaimTimer.Enabled ? "Stop" : "Start";
 
             ShowNotification("Auto Claimer: " + (ClaimTimer.Enabled ? "Started" : "Stopped"));
         }
 
-        private void Claim_Tick(object? sender, EventArgs e)
+        private async void FreeRoll()
         {
-            bool tryAgain = true;
-            int attempt = 0;
-            while (tryAgain)
-            {
-                try
-                {
-                    FreebitcoinControl.PlayFreeRoll();
-                    tryAgain = false;
-                }
-                catch (Exception ex)
-                {
-                    attempt++;
-
-                    if (attempt == 3)
-                    {
-                        ClaimTimer.Stop();
-                        MessageBox.Show(ex.Message, "Freebitcoin Claimer", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return;
-                    }
-                }
-            }
-
-            CurrentBalance = FreebitcoinControl.GetBalance();
-            int digits = FreebitcoinControl.GetFreeRollDigits();
-            string result = FreebitcoinControl.GetFreeRollResult();
-            double profit = FreebitcoinControl.GetFreeRollWinnings();
-
-            resultGridView.Rows.Add(DateTime.Now.ToShortTimeString(), digits.ToString("D5"), profit.ToString("0.00000000", CultureInfo.InvariantCulture));
-
-            UpdateView();
-
-            var sb = new StringBuilder();
-            sb.AppendLine($"Rolled {digits.ToString("D5")}");
-            sb.AppendLine(result);
-
-            ShowNotification(sb.ToString());
-
-            SetClaimTimerInterval();
-        }
-
-        private void SetClaimTimerInterval()
-        {
-            TimeSpan countdown;
+            FreeRollResult result;
 
             try
             {
-                countdown = FreebitcoinControl.GetCountdown();
+                result = await FreebitcoinManager.FreeRoll();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                countdown = TimeSpan.FromMilliseconds(DefaultClaimInterval);
+                var split = ex.Message.Split(':');
+                MessageBox.Show(split[0], "Freebitcoin Claimer", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ClaimTimer.Interval = (int)TimeSpan.FromSeconds(double.Parse(split[1])).TotalMilliseconds;
+                return;
             }
 
-            int configurationDelay = Config.GetIntegerValue("Claim.Delay", 0);
-            ClaimTimer.Interval = Convert.ToInt32(countdown.TotalMilliseconds) + configurationDelay;
+            currentBalanceValueLabel.Text = ToFreebitcoinNumber(result.Balance.ToString());
+
+            resultGridView.Rows.Add($"{DateTime.Now.ToShortDateString()} - {DateTime.Now.ToShortTimeString()}", result.RollNumber.ToString("00000"), ToFreebitcoinNumber(result.Winnings.ToString()), result.VerificationLink);
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"Rolled {result.RollNumber.ToString("00000")}");
+            sb.AppendLine(ToFreebitcoinNumber(result.Winnings.ToString()));
+
+            ShowNotification(sb.ToString());
         }
 
-        private void UpdateView()
+        private void Claim_Tick(object? sender, EventArgs e)
         {
-            actionButton.Text = ClaimTimer.Enabled ? "Stop" : "Start";
-            actionMenuItem.Text = ClaimTimer.Enabled ? "Stop" : "Start";
+            FreeRoll();
+            ClaimTimer.Interval = DefaultClaimInterval;
 
-            this.initialBalanceValueLabel.Text = InitialBalance.ToString(CultureInfo.InvariantCulture);
-            this.currentBalanceValueLabel.Text = CurrentBalance.ToString(CultureInfo.InvariantCulture);
-
-            if (InitialBalance >= CurrentBalance)
-                currentBalanceValueLabel.ForeColor = Color.Black;
-            else
-                currentBalanceValueLabel.ForeColor = Color.DarkGreen;
         }
+
+        private async void GetUserStats()
+        {
+            var userStats = await FreebitcoinManager.GetUserStats();
+            currentBalanceValueLabel.Text = ToFreebitcoinNumber(userStats.User!.Balance!);
+        }
+
+        public string ToFreebitcoinNumber(string value) => (double.Parse(value) / 100000000).ToString("0.00000000", CultureInfo.InvariantCulture);
 
         #region Form Default Behavior
         private void ShowForm()

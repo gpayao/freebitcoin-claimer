@@ -7,8 +7,8 @@ namespace FreebitcoinClaimer.Utility
 {
     internal static class Config
     {
-        private static JToken? root;
-        private static readonly string SettingsFile = Path.Combine(Folders.Configuration, "FreeBitcoinClaimerSettings.json");
+        private static JObject? root;
+        private static readonly string SettingsFile = Path.Combine(Folders.Configuration, "Settings.json");
 
         internal static void Load()
         {
@@ -24,7 +24,7 @@ namespace FreebitcoinClaimer.Utility
                 try
                 {
                     // Load settings from JSON
-                    root = Util.ReadJson<JToken>(SettingsFile);
+                    root = Util.ReadJson<JObject>(SettingsFile);
                 }
                 catch (JsonSerializationException ex)
                 {
@@ -49,13 +49,10 @@ namespace FreebitcoinClaimer.Utility
         {
             root = JObject.FromObject(new
             {
-                Claim = new
-                {
-                    Delay = 1000
-                },
                 LogToFile = true,
-                LogLevel = "info",
-                CheckForUpdates = true
+                LogLevel = "Information",
+                CheckForUpdates = true,
+                ClaimDelay = 1000
             });
         }
 
@@ -189,7 +186,7 @@ namespace FreebitcoinClaimer.Utility
             string[] parts = key.Split('.');
             JToken currentToken = root!;
 
-            for (int i = 0; i < parts.Length; i++)  
+            for (int i = 0; i < parts.Length; i++)
             {
                 if (currentToken is not JObject)
                 {

@@ -36,7 +36,7 @@
             faLabel = new Label();
             faTextBox = new TextBox();
             loginButton = new Button();
-            clockLabel = new Label();
+            remeberMeCheckBox = new CheckBox();
             SuspendLayout();
             // 
             // emailAddressTextBox
@@ -100,7 +100,7 @@
             // 
             // loginButton
             // 
-            loginButton.Location = new Point(12, 190);
+            loginButton.Location = new Point(12, 205);
             loginButton.Name = "loginButton";
             loginButton.Size = new Size(253, 23);
             loginButton.TabIndex = 4;
@@ -108,22 +108,22 @@
             loginButton.UseVisualStyleBackColor = true;
             loginButton.Click += LoginButton_Click;
             // 
-            // clockLabel
+            // remeberMeCheckBox
             // 
-            clockLabel.AutoSize = true;
-            clockLabel.Location = new Point(12, 15);
-            clockLabel.Name = "clockLabel";
-            clockLabel.Size = new Size(34, 15);
-            clockLabel.TabIndex = 0;
-            clockLabel.Text = "00:00";
-            clockLabel.Visible = false;
+            remeberMeCheckBox.AutoSize = true;
+            remeberMeCheckBox.Location = new Point(12, 180);
+            remeberMeCheckBox.Name = "remeberMeCheckBox";
+            remeberMeCheckBox.Size = new Size(104, 19);
+            remeberMeCheckBox.TabIndex = 7;
+            remeberMeCheckBox.Text = "Remember Me";
+            remeberMeCheckBox.UseVisualStyleBackColor = true;
             // 
             // LoginForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(277, 227);
-            Controls.Add(clockLabel);
+            ClientSize = new Size(277, 240);
+            Controls.Add(remeberMeCheckBox);
             Controls.Add(loginButton);
             Controls.Add(faLabel);
             Controls.Add(faTextBox);
@@ -140,7 +140,6 @@
             SizeGripStyle = SizeGripStyle.Hide;
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Freebitco.in Claimer Login";
-            FormClosing += LoginForm_FormClosing;
             ResumeLayout(false);
             PerformLayout();
         }
@@ -155,6 +154,6 @@
         private Label faLabel;
         private TextBox faTextBox;
         private Button loginButton;
-        private Label clockLabel;
+        private CheckBox remeberMeCheckBox;
     }
 }

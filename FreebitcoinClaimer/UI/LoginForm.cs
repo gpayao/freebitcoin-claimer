@@ -7,8 +7,6 @@ namespace FreebitcoinClaimer.UI
 {
     public partial class LoginForm : Form
     {
-        public bool SuccessfulLogin { get; set; } = false;
-
         private Timer Timer { get; set; }
         private double currentClock = 0;
 
@@ -16,6 +14,7 @@ namespace FreebitcoinClaimer.UI
         {
             InitializeComponent();
             Timer = new Timer();
+            DialogResult = DialogResult.Abort;
         }
 
         private void LoginButton_Click(object sender, EventArgs e) => LoginFreebitcoin();
@@ -28,10 +27,12 @@ namespace FreebitcoinClaimer.UI
             var username = this.emailAddressTextBox.Text;
             var password = this.passwordTextBox.Text;
             var tfa = this.faTextBox.Text;
+            var saveInformation = remeberMeCheckBox.Checked;
 
             try
             {
-                await FreebitcoinManager.Login(username, password, tfa);
+                await FreebitcoinManager.Login(username, password, tfa, saveInformation);
+                this.DialogResult = DialogResult.OK;
             }
             catch (TooManyAttemptsException ex)
             {
@@ -61,23 +62,16 @@ namespace FreebitcoinClaimer.UI
 
         private void Timer_Tick(object? sender, EventArgs e)
         {
-            clockLabel.Visible = true;
-            clockLabel.Text = TimeSpan.FromSeconds(currentClock).ToString(@"mm\:ss");
+            this.loginButton.Text = TimeSpan.FromSeconds(currentClock).ToString(@"mm\:ss");
 
             currentClock--;
 
             if (currentClock == 0)
             {
                 Timer.Stop();
-                clockLabel.Visible = false;
+                this.loginButton.Text = "Login";
                 this.loginButton.Enabled = true;
             }
-        }
-
-        private void LoginForm_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            if (!SuccessfulLogin)
-                Program.Shutdown();
         }
     }
 }
