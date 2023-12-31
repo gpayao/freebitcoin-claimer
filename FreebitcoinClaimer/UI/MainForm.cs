@@ -32,7 +32,7 @@ namespace FreebitcoinClaimer.UI
         {
             if (ClaimTimer.Enabled)
             {
-                var dialogResult = MessageBox.Show("Claimer is still running.\nWould you like to stop claiming?", "Freebitcoin Claimer", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                var dialogResult = MessageBox.Show("Are you sure you want to stop auto-claiming?", Program.APP_Name, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                 if (dialogResult == DialogResult.No)
                     return;
@@ -66,13 +66,13 @@ namespace FreebitcoinClaimer.UI
                 return;
             }
 
-            currentBalanceValueLabel.Text = ToFreebitcoinNumber(result.Balance.ToString());
+            currentBalanceValueLabel.Text = result.Balance.ToString().ToFreeBitcoinNumber();
 
-            resultGridView.Rows.Add($"{DateTime.Now.ToShortDateString()} - {DateTime.Now.ToShortTimeString()}", result.RollNumber.ToString("00000"), ToFreebitcoinNumber(result.Winnings.ToString()), result.VerificationLink);
+            resultGridView.Rows.Add($"{DateTime.Now.ToShortDateString()} - {DateTime.Now.ToShortTimeString()}", result.RollNumber.ToString("00000"), result.Winnings.ToString().ToFreeBitcoinNumber(), result.VerificationLink);
 
             var sb = new StringBuilder();
             sb.AppendLine($"Rolled {result.RollNumber.ToString("00000")}");
-            sb.AppendLine(ToFreebitcoinNumber(result.Winnings.ToString()));
+            sb.AppendLine(result.Winnings.ToString().ToFreeBitcoinNumber());
 
             ShowNotification(sb.ToString());
         }
@@ -81,16 +81,13 @@ namespace FreebitcoinClaimer.UI
         {
             FreeRoll();
             ClaimTimer.Interval = DefaultClaimInterval;
-
         }
 
         private async void GetUserStats()
         {
             var userStats = await FreebitcoinManager.GetUserStats();
-            currentBalanceValueLabel.Text = ToFreebitcoinNumber(userStats.User!.Balance!);
+            currentBalanceValueLabel.Text = userStats.User!.Balance!.ToFreeBitcoinNumber();
         }
-
-        public string ToFreebitcoinNumber(string value) => (double.Parse(value) / 100000000).ToString("0.00000000", CultureInfo.InvariantCulture);
 
         #region Form Default Behavior
         private void ShowForm()
