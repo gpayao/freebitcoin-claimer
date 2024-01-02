@@ -54,7 +54,6 @@
             settingsToolStripMenuItem = new ToolStripMenuItem();
             toolStripSeparator2 = new ToolStripSeparator();
             quitToolStripMenuItem = new ToolStripMenuItem();
-            helpToolStripMenuItem = new ToolStripMenuItem();
             basicToolTip = new ToolTip(components);
             button1 = new Button();
             claimControlsGroupBox = new GroupBox();
@@ -165,7 +164,7 @@
             // 
             // menuStrip
             // 
-            menuStrip.Items.AddRange(new ToolStripItem[] { claimerToolStripMenuItem, helpToolStripMenuItem });
+            menuStrip.Items.AddRange(new ToolStripItem[] { claimerToolStripMenuItem });
             menuStrip.Location = new Point(0, 0);
             menuStrip.Name = "menuStrip";
             menuStrip.Size = new Size(442, 24);
@@ -182,39 +181,33 @@
             // actionToolStripMenuItem
             // 
             actionToolStripMenuItem.Name = "actionToolStripMenuItem";
-            actionToolStripMenuItem.Size = new Size(116, 22);
+            actionToolStripMenuItem.Size = new Size(180, 22);
             actionToolStripMenuItem.Text = "Start";
             actionToolStripMenuItem.Click += AutoClaimButton_Click;
             // 
             // toolStripSeparator1
             // 
             toolStripSeparator1.Name = "toolStripSeparator1";
-            toolStripSeparator1.Size = new Size(113, 6);
+            toolStripSeparator1.Size = new Size(177, 6);
             // 
             // settingsToolStripMenuItem
             // 
             settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-            settingsToolStripMenuItem.Size = new Size(116, 22);
+            settingsToolStripMenuItem.Size = new Size(180, 22);
             settingsToolStripMenuItem.Text = "Settings";
             settingsToolStripMenuItem.Click += SettingsToolStripMenuItem_Click;
             // 
             // toolStripSeparator2
             // 
             toolStripSeparator2.Name = "toolStripSeparator2";
-            toolStripSeparator2.Size = new Size(113, 6);
+            toolStripSeparator2.Size = new Size(177, 6);
             // 
             // quitToolStripMenuItem
             // 
             quitToolStripMenuItem.Name = "quitToolStripMenuItem";
-            quitToolStripMenuItem.Size = new Size(116, 22);
+            quitToolStripMenuItem.Size = new Size(180, 22);
             quitToolStripMenuItem.Text = "Quit";
             quitToolStripMenuItem.Click += QuitMenuItem_Click;
-            // 
-            // helpToolStripMenuItem
-            // 
-            helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-            helpToolStripMenuItem.Size = new Size(44, 20);
-            helpToolStripMenuItem.Text = "Help";
             // 
             // button1
             // 
@@ -389,7 +382,6 @@
         private ToolStripMenuItem settingsToolStripMenuItem;
         private ToolStripSeparator toolStripSeparator2;
         private ToolStripMenuItem quitToolStripMenuItem;
-        private ToolStripMenuItem helpToolStripMenuItem;
         private ToolTip basicToolTip;
         private GroupBox claimControlsGroupBox;
         private GroupBox infoGroupBox;
