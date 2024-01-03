@@ -31,7 +31,7 @@ namespace FreebitcoinClaimer.UI
             UpdateInfoTimer.Interval = UpdateInfoDelay;
             UpdateInfoTimer.Start();
 
-            appNameMenuItem.Text = Program.APP_Name + " " + Program.VERSION;
+            appNameMenuItem.Text = Program.APP_Name + " " + Program.Version;
 
             UpdateBalance();
         }
