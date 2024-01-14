@@ -1,5 +1,4 @@
 ﻿using FreebitcoinClaimer.Services.Exceptions;
-using System.ComponentModel;
 
 namespace FreebitcoinClaimer.Services.Extensions
 {

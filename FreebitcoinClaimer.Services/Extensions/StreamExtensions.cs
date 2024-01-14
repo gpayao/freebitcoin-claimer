@@ -1,5 +1,4 @@
-﻿using FreebitcoinClaimer.Services.Exceptions;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System.Reflection;
 
 namespace FreebitcoinClaimer.Services.Extensions

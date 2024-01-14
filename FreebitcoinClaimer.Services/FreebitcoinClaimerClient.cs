@@ -2,7 +2,6 @@
 using FreebitcoinClaimer.Services.Extensions;
 using FreebitcoinClaimer.Services.Requests;
 using FreebitcoinClaimer.Services.Requests.Abstractions;
-using FreebitcoinClaimer.Services.Types;
 using System.Net;
 
 namespace FreebitcoinClaimer.Services
