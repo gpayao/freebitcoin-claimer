@@ -1,11 +1,11 @@
 ﻿namespace FreebitcoinClaimer.Services.Types
 {
-    public class FreeRollResult
-    {
-        public FreeRollResult()
+    public class FreeRoll
+    { 
+        public FreeRoll()
         { }
 
-        public FreeRollResult(
+        public FreeRoll(
             int rollNumber,
             double balance,
             double winnings,
