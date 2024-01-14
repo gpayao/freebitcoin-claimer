@@ -1,4 +1,5 @@
 ﻿using FreebitcoinClaimer.Services.Exceptions;
+using System.ComponentModel;
 
 namespace FreebitcoinClaimer.Services.Extensions
 {
@@ -22,33 +23,33 @@ namespace FreebitcoinClaimer.Services.Extensions
             {
                 T? deserializedObject;
 
-                try
+                // Check content type
+                var contentType = httpResponse.Content.Headers.ContentType?.MediaType;
+
+                if (string.Equals(contentType, "application/json", StringComparison.OrdinalIgnoreCase))
                 {
-                    // Check content type
-                    var contentType = httpResponse.Content.Headers.ContentType?.MediaType;
-
-                    if (string.Equals(contentType, "application/json", StringComparison.OrdinalIgnoreCase))
+                    try
                     {
-                        try
-                        {
-                            // Deserialize JSON response
-                            contentStream = await httpResponse.Content
-                                .ReadAsStreamAsync()
-                                .ConfigureAwait(continueOnCapturedContext: false);
+                        // Deserialize JSON response
+                        contentStream = await httpResponse.Content
+                            .ReadAsStreamAsync()
+                            .ConfigureAwait(continueOnCapturedContext: false);
 
-                            deserializedObject = contentStream
-                                .DeserializeJsonFromStream<T>();
-                        }
-                        catch (Exception exception)
-                        {
-                            throw CreateRequestException(
-                                httpResponse: httpResponse,
-                                message: "Required properties not found in response",
-                                exception: exception
-                            );
-                        }
+                        deserializedObject = contentStream
+                            .DeserializeJsonFromStream<T>();
                     }
-                    else
+                    catch (Exception exception)
+                    {
+                        throw CreateRequestException(
+                            httpResponse: httpResponse,
+                            message: "Required properties not found in response",
+                            exception: exception
+                        );
+                    }
+                }
+                else
+                {
+                    try
                     {
                         // Handle other response format
                         contentStream = await httpResponse.Content
@@ -58,14 +59,15 @@ namespace FreebitcoinClaimer.Services.Extensions
                         deserializedObject = contentStream
                             .DeserializeCustomFormatFromStream<T>();
                     }
-                }
-                catch (Exception exception)
-                {
-                    throw CreateRequestException(
-                        httpResponse: httpResponse,
-                        message: "Error deserializing response",
-                        exception: exception
-                    );
+                    catch (Exception exception)
+                    {
+                        throw CreateRequestException(
+                            httpResponse: httpResponse,
+                            message: exception.Message,
+                            exception: exception
+                        );
+                    }
+
                 }
 
                 if (deserializedObject is null)

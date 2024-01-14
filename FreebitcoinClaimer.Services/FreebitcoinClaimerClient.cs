@@ -1,6 +1,8 @@
 ﻿using FreebitcoinClaimer.Services.Exceptions;
 using FreebitcoinClaimer.Services.Extensions;
+using FreebitcoinClaimer.Services.Requests;
 using FreebitcoinClaimer.Services.Requests.Abstractions;
+using FreebitcoinClaimer.Services.Types;
 using System.Net;
 
 namespace FreebitcoinClaimer.Services
@@ -10,6 +12,10 @@ namespace FreebitcoinClaimer.Services
         readonly FreebitcoinClaimerClientOptions _options;
 
         readonly HttpClient _httpClient;
+
+        readonly CookieContainer _cookieContainer;
+
+        readonly HttpClientHandler _httpClientHandler;
 
         public IExceptionParser ExceptionsParser { get; set; } = new DefaultExceptionParser();
 
@@ -26,7 +32,9 @@ namespace FreebitcoinClaimer.Services
             HttpClient? httpClient = default)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
-            _httpClient = httpClient ?? new HttpClient();
+            _cookieContainer = new CookieContainer();
+            _httpClientHandler = new HttpClientHandler() { CookieContainer = _cookieContainer };
+            _httpClient = httpClient ?? new HttpClient(_httpClientHandler);
         }
 
         public FreebitcoinClaimerClient(
@@ -107,6 +115,29 @@ namespace FreebitcoinClaimer.Services
             }
 
             return httpResponse;
+        }
+
+        public async Task LoginAsync(
+            string btcAddress,
+            string password,
+            string? tfaCode = default,
+            CancellationToken cancellationToken = default
+        )
+        {
+            var login = await MakeRequestAsync(
+                    request: new LoginRequest(
+                        btcAddress,
+                        password,
+                        tfaCode
+                    ),
+                    cancellationToken: cancellationToken
+                )
+                .ConfigureAwait(false);
+
+            _cookieContainer.Add(new Uri(_options.BaseRequestUrl), new Cookie("btc_address", login.BtcAddress));
+            _cookieContainer.Add(new Uri(_options.BaseRequestUrl), new Cookie("password", login.Password));
+            _cookieContainer.Add(new Uri(_options.BaseRequestUrl), new Cookie("fbtc_userid", login.FbtcUserId));
+            _cookieContainer.Add(new Uri(_options.BaseRequestUrl), new Cookie("fbtc_session", login.FbtcSession));
         }
 
         #region Testing purposes

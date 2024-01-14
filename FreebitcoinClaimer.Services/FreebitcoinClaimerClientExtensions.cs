@@ -24,23 +24,5 @@ namespace FreebitcoinClaimer.Services
                     cancellationToken: cancellationToken
                 )
                 .ConfigureAwait(false);
-
-        public static async Task<Login> LoginAsync(
-            this IFreebitcoinClaimerClient claimerClient,
-            string btcAddress,
-            string password,
-            string? tfaCode = default,
-            CancellationToken cancellationToken = default
-        ) => 
-            await claimerClient
-                .MakeRequestAsync(
-                    request: new LoginRequest(
-                        btcAddress,
-                        password,
-                        tfaCode
-                    ),
-                    cancellationToken: cancellationToken
-                )
-                .ConfigureAwait(false);
     }
 }
